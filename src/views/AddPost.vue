@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { ArrowLeft, Image as ImageIcon, X, Video } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-import { logAction } from '../services/api'
+import { addPost } from '../services/api'
 import { checkAuth } from '../auth'
 const router = useRouter()
 
@@ -10,21 +10,20 @@ const fileInput = ref(null)
 const uploadedFiles = ref([])
 
 
-
+const title = ref('')
 const category = ref('')
 const description = ref('')
-const hours_invested = ref('')
 
-const submitAction = async (e) => {
+const submitPost = async (e) => {
   try {
     e.preventDefault()
-    const response = await logAction({
+    const response = await addPost({
+      title: title.value,
       category: category.value,
       description: description.value,
-      hours_invested: hours_invested.value,
       attachments: uploadedFiles.value
     })
-    alert("Action logged successfully!")
+    alert("Post submitted successfully!")
     await checkAuth()
     router.push({ name: 'home' });
   } catch (error) {
@@ -79,7 +78,7 @@ const removeFile = (index) => {
       </button>
 
       <h2 class="font-bold text-lg text-gray-900 mx-auto -ml-2">
-        Log Action
+        Add a Post
       </h2>
 
       <div class="w-6"></div>
@@ -87,10 +86,40 @@ const removeFile = (index) => {
 
     <div class="px-5 pt-2 pb-12">
       <form class="space-y-6">
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-bold text-gray-900 mb-2">
+            Title
+            <span class="text-red-500">*</span>
+          </label>
+
+          <input
+            v-model="title"
+            placeholder="Title of your post"
+            class="w-full bg-white border border-gray-200 rounded-2xl p-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm resize-none"
+          ></input>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-bold text-gray-900 mb-2">
+            Description
+            <span class="text-red-500">*</span>
+          </label>
+
+          <textarea
+            rows="3"
+            v-model="description"
+            placeholder="What you would like to share with the community?"
+            class="w-full bg-white border border-gray-200 rounded-2xl p-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm resize-none"
+          ></textarea>
+        </div>
+
         <!-- Action Category -->
         <div>
           <label class="block text-sm font-bold text-gray-900 mb-2">
-            Action Category
+            Category
             <span class="text-red-500">*</span>
           </label>
 
@@ -107,38 +136,6 @@ const removeFile = (index) => {
             <option value="Civic">Civic</option>
             <option value="Education">Education</option>
           </select>
-        </div>
-
-        <!-- Description -->
-        <div>
-          <label class="block text-sm font-bold text-gray-900 mb-2">
-            Description
-            <span class="text-red-500">*</span>
-          </label>
-
-          <textarea
-            rows="3"
-            v-model="description"
-            placeholder="What impact did you make today?"
-            class="w-full bg-white border border-gray-200 rounded-2xl p-4 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm resize-none"
-          ></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-bold text-gray-900 mb-2">
-            Hours Invested
-            <span class="text-red-500">*</span>
-          </label>
-
-          <input
-            type="number"
-            min="0"
-            v-model="hours_invested"
-            max="24"
-            step="0.5"
-            placeholder="0"
-            class="w-full bg-white border border-gray-200 rounded-xl p-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm resize-none"
-          />
         </div>
 
         <!-- Media -->
@@ -224,11 +221,11 @@ const removeFile = (index) => {
 
         <!-- Submit -->
         <button
-          @click="submitAction"
+          @click="submitPost"
           type="button"
           class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-2xl p-4 shadow-lg shadow-primary-500/30 transition-colors uppercase tracking-wider text-sm"
         >
-          Submit Action
+          Submit Post
         </button>
       </form>
     </div>
