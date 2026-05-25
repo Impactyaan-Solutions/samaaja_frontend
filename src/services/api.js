@@ -40,7 +40,6 @@ export const getProfile = async (email) => {
 
     const data = await callAPI(headers, url, 'GET', null)
 
-    // Returns the message object from Frappe
     return data.data
 }
 
@@ -126,9 +125,9 @@ export const getLeaderboard = async () => {
 
     const data = await callAPI(headers, url, 'GET', null)
 
-    // Returning result.data to stay consistent with your other methods
     return data.data
 }
+
 export const likePost = async (post_id, user_id) => {
     try {
         const headers = {
@@ -144,6 +143,7 @@ export const likePost = async (post_id, user_id) => {
     }
 }
 
+// RESTORED UNLIKE FUNCTION
 export const unlikePost = async (post_id, user_id) => {
     try {
         const headers = {
@@ -158,6 +158,7 @@ export const unlikePost = async (post_id, user_id) => {
         throw err
     }
 }
+
 export const logout = async () => {
     const requestOptions = getRequestOptions() || {};
 
