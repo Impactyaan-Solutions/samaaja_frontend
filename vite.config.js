@@ -16,11 +16,20 @@ export default defineConfig({
         changeOrigin: true,
         cookieDomainRewrite: "localhost"
       },
+      '/website_script.js': {
+        target: 'https://dev.samaaja.impactyaan.com',
+        changeOrigin: true
+    },
       '/files': {
         target: 'https://dev.samaaja.impactyaan.com',
         changeOrigin: true
       },
       '/private': {
+        target: 'https://dev.samaaja.impactyaan.com',
+        changeOrigin: true
+      },
+      // Added to catch default Frappe system avatars and static files
+      '/assets': {
         target: 'https://dev.samaaja.impactyaan.com',
         changeOrigin: true
       }

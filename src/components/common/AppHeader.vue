@@ -1,11 +1,11 @@
 <script setup>
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n' // 1. Import useI18n
+import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Menu, Settings, LogOut } from 'lucide-vue-next'
 import { authState } from '@/auth'
 import { logout as apiLogout } from '@/services/api'
 
-const { t } = useI18n() // 2. Initialize translation
+const { t, locale } = useI18n({ useScope: 'global' })
 
 defineProps({
   title: {
@@ -15,6 +15,37 @@ defineProps({
 })
 
 const isMenuOpen = ref(false)
+const translatedCategory = ref(authState.profile.category || '')
+const isTranslating = ref(false)
+
+const translateText = async (text, targetLang) => {
+  if (!text) return text
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`
+    const response = await fetch(url)
+    const data = await response.json()
+    return data[0].map(item => item[0]).join('')
+  } catch (error) {
+    console.error("Translation failed:", error)
+    return text
+  }
+}
+
+const handleTranslation = async (targetLang) => {
+  if (!authState.profile.category) return
+  isTranslating.value = true
+  translatedCategory.value = await translateText(authState.profile.category, targetLang)
+  isTranslating.value = false
+}
+
+watch(locale, (newLang) => {
+  handleTranslation(newLang)
+})
+
+onMounted(() => {
+  const savedLang = localStorage.getItem('lang') || 'en'
+  handleTranslation(savedLang)
+})
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
@@ -42,12 +73,12 @@ const handleLogout = async () => {
       <template v-else>
         <router-link to="/profile" class="flex items-center space-x-3">
           <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold overflow-hidden">
-            <img v-if="authState.profile.image" :src="authState.profile.image" class="w-full h-full object-cover" />
+            <img v-if="authState.profile.image" :src="authState.profile.image" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
             <span v-else>{{ authState.profile.fullName ? authState.profile.fullName.charAt(0) : '?' }}</span>
           </div>
           <div>
             <h2 class="font-bold text-gray-900 text-[15px]">{{ authState.profile.fullName }}</h2>
-            <p class="text-[11px] text-gray-500">{{ authState.profile.category }}</p>
+            <p class="text-[11px] text-gray-500 transition-opacity duration-300" :class="{ 'opacity-50': isTranslating }">{{ translatedCategory }}</p>
           </div>
         </router-link>
       </template>

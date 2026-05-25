@@ -7,6 +7,19 @@ import { CapacitorCookies } from '@capacitor/core'
 // For production (Capacitor/Web), use the absolute URL
 const baseurl = import.meta.env.DEV ? '' : import.meta.env.VITE_API_BASE_URL
 
+/**
+ * Helper to fetch local developer credentials from the .env file.
+ * Automatically active only in development environments.
+ */
+const getDevHeaders = () => {
+    if (import.meta.env.DEV && import.meta.env.VITE_DEV_API_KEY && import.meta.env.VITE_DEV_API_SECRET) {
+        return {
+            'Authorization': `token ${import.meta.env.VITE_DEV_API_KEY}:${import.meta.env.VITE_DEV_API_SECRET}`
+        }
+    }
+    return {}
+}
+
 export const getFeed = async (limit = 10, offset = 0) => {
     const headers = {
         'Accept': 'application/json',
@@ -15,6 +28,7 @@ export const getFeed = async (limit = 10, offset = 0) => {
     const response = await callAPI(headers, `${baseurl}/api/method/samaaja.api.feed.get?limit=${limit}&offset=${offset}`, 'GET', null)
     return response.data
 }
+
 export const getProfile = async (email) => {
     const headers = {
         'Accept': 'application/json',
@@ -37,7 +51,6 @@ export const getLoggedUser = async () => {
     }
     const data = await callAPI(headers, baseurl + '/api/method/frappe.auth.get_logged_user', 'GET', null)
     return data.message
-
 }
 
 export const getGoogleSignInURL = async () => {
@@ -58,6 +71,12 @@ export const getGoogleSignInURL = async () => {
 }
 
 export const fetchImageAsBase64 = async (url) => {
+    // 🛡️ GUARD: Instantly reject Python "None", "null", or empty URLs
+    // This prevents the 404 network errors entirely.
+    if (!url || url.includes('None') || url.includes('null')) {
+        return null;
+    }
+
     try {
         // Rewrite absolute URLs to relative paths in DEV so Vite proxy can handle CORS
         if (import.meta.env.DEV && url.startsWith('http')) {
@@ -69,8 +88,21 @@ export const fetchImageAsBase64 = async (url) => {
             }
         }
 
-        const response = await fetch(url, getRequestOptions());
-        if (!response.ok) throw new Error('Network response was not ok');
+        const requestOptions = getRequestOptions() || {};
+        requestOptions.headers = {
+            ...(requestOptions.headers || {}),
+            ...getDevHeaders() // Inject developer API key headers locally
+        };
+
+        const response = await fetch(url, requestOptions);
+        
+        // If the server returns a 404 for a missing image (like recall.png), 
+        // gracefully exit without throwing a massive error that breaks the app.
+        if (!response.ok) {
+            console.warn(`[Image Fetch] Could not load image at ${url} (Status: ${response.status})`);
+            return null; 
+        }
+        
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -79,7 +111,7 @@ export const fetchImageAsBase64 = async (url) => {
             reader.readAsDataURL(blob);
         });
     } catch (error) {
-        console.error("Failed to fetch image as base64", error);
+        console.error("[Image Fetch] Failed to fetch image as base64", error);
         return null;
     }
 }
@@ -97,15 +129,45 @@ export const getLeaderboard = async () => {
     // Returning result.data to stay consistent with your other methods
     return data.data
 }
+export const likePost = async (post_id, user_id) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }
+        const result = await callAPI(headers, baseurl + '/api/method/samaaja.api.post.like', 'POST', { post_id, user_id })
+        return result.data
+    }
+    catch (err) {
+        console.error("FETCH FAILED", err)
+        throw err
+    }
+}
+
+export const unlikePost = async (post_id, user_id) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }
+        const result = await callAPI(headers, baseurl + '/api/method/samaaja.api.post.unlike', 'POST', { post_id, user_id })
+        return result.data
+    }
+    catch (err) {
+        console.error("FETCH FAILED", err)
+        throw err
+    }
+}
 export const logout = async () => {
-    const requestOptions = getRequestOptions();
+    const requestOptions = getRequestOptions() || {};
 
     // Changing to GET often bypasses CSRF issues on logout
     const response = await fetch(baseurl + '/api/method/logout', {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
-            ...requestOptions.headers
+            ...(requestOptions.headers || {}),
+            ...getDevHeaders() // Inject developer API key headers locally
         },
         ...requestOptions
     });
@@ -146,7 +208,6 @@ export const loginUsingOtp = async (data) => {
         body: JSON.stringify(data)
     })
 
-
     if (response.status === 404) {
         alert("User not found!")
         return false
@@ -156,28 +217,14 @@ export const loginUsingOtp = async (data) => {
     }
 
     if (Capacitor.isNativePlatform()) {
-
         const data = await response.json()
-
         console.log("LOGIN RESPONSE", data.data)
 
         // Store user auth tokens
-        localStorage.setItem(
-            'api_key',
-            data.data.api_key
-        )
-
-        localStorage.setItem(
-            'api_secret',
-            data.data.api_secret
-        )
-
-        localStorage.setItem(
-            'user',
-            data.data.user
-        )
+        localStorage.setItem('api_key', data.data.api_key)
+        localStorage.setItem('api_secret', data.data.api_secret)
+        localStorage.setItem('user', data.data.user)
     }
-
 
     return true
 }
@@ -185,18 +232,13 @@ export const loginUsingOtp = async (data) => {
 export const logAction = async (data) => {
     try {
         console.log("ORIGINAL DATA", data)
-
         const formData = new FormData()
 
         for (const key in data) {
-
             // Handle file arrays
             if (Array.isArray(data[key])) {
-
                 for (const item of data[key]) {
-
                     if (item.file instanceof File) {
-
                         console.log("Compressing:", item.file.name)
 
                         const compressedFile = await imageCompression(
@@ -220,9 +262,7 @@ export const logAction = async (data) => {
                         )
                     }
                 }
-
             } else {
-
                 // Skip null/undefined
                 if (data[key] !== null && data[key] !== undefined) {
                     formData.append(key, data[key])
@@ -233,32 +273,23 @@ export const logAction = async (data) => {
         console.log("FORM DATA READY")
         const result = await callAPI({}, baseurl + '/api/method/samaaja.api.action.create', 'POST', formData, true)
         return result.data
-
     }
     catch (err) {
-
         console.error("FETCH FAILED", err)
-
         throw err
     }
 }
 
-
 export const addPost = async (data) => {
     try {
         console.log("ORIGINAL DATA", data)
-
         const formData = new FormData()
 
         for (const key in data) {
-
             // Handle file arrays
             if (Array.isArray(data[key])) {
-
                 for (const item of data[key]) {
-
                     if (item.file instanceof File) {
-
                         console.log("Compressing:", item.file.name)
 
                         const compressedFile = await imageCompression(
@@ -282,9 +313,7 @@ export const addPost = async (data) => {
                         )
                     }
                 }
-
             } else {
-
                 // Skip null/undefined
                 if (data[key] !== null && data[key] !== undefined) {
                     formData.append(key, data[key])
@@ -295,25 +324,23 @@ export const addPost = async (data) => {
         console.log("FORM DATA READY")
         const result = await callAPI({}, baseurl + '/api/method/samaaja.api.post.add', 'POST', formData, true)
         return result.data
-
     } catch (err) {
-
         console.error("FETCH FAILED", err)
-
         throw err
     }
 }
 
-
 const callAPI = async (headers, url, method, data = null, isFormData = false, addToken = true) => {
-
     if (Capacitor.isNativePlatform() && addToken) {
         headers = { ...headers, ...getAPITokenFromStorage() }
     } else {
-        headers = { ...headers, ...getRequestOptions() }
+        // Automatically merges request options AND local developer environment variables
+        headers = { ...headers, ...getRequestOptions(), ...getDevHeaders() }
     }
-    console.log(headers)
+    
+    console.log("Executing Call with Headers:", headers)
     let response
+    
     if (data != null) {
         if (isFormData) {
             response = await fetch(url, {

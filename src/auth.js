@@ -62,46 +62,26 @@ loadCachedAuth()
 
 export async function checkAuth() {
   try {
-    if (import.meta.env.DEV === true) {
-      authState.isLoggedIn = true;
-      authState.email = 'Administrator';
-      authState.profile.fullName = 'Ankit Saxena';
-      authState.profile.image = 'https://dev.samaaja.impactyaan.com/files/recall.png';
-      authState.profile.category = 'Volunteer';
-      authState.profile.organization = 'Samaaja';
-      authState.profile.interests = 'Community, Volunteering, Social Work';
-      authState.profile.bio = 'Passionate about helping the community.';
-      authState.profile.gender = 'Male';
-      authState.profile.dob = '1990-01-01';
-      authState.profile.mobileNumber = '9876543210';
-      authState.profile.stats.actions = 10;
-      authState.profile.stats.issuesReported = 5;
-      // Cache the fresh data!
-      saveCachedAuth()
-      // Fetch the image in the background and cache the base64!
-      await fetchImageAsBase64(authState.profile.image).then(base64 => {
-        //console.log("Image Base64: ", base64)
-        if (base64) {
-          authState.profile.imageBase64 = base64;
-          saveCachedAuth();
-        }
-      });
-      return;
-    }
-
+    // 1. Fetch real logged in user (works in Dev now because of api.js proxy/tokens!)
     const data = await getLoggedUser();
     authState.email = data;
     authState.isLoggedIn = true;
-    authState.isInitialLoad = false;
+    
+    // 2. Fetch their actual profile data from Frappe
     const user_profile = await getProfile(data)
+    
     if (user_profile) {
+      // 3. Sanitize the Python "None" string right away before it hits the cache
+      const rawImage = user_profile.user_image;
+      const sanitizedImage = (rawImage === 'None' || rawImage === 'null' || !rawImage) ? null : rawImage;
+
       authState.profile.fullName = user_profile.full_name
-      authState.profile.image = user_profile.user_image
+      authState.profile.image = sanitizedImage // Store the clean image
       authState.profile.category = user_profile.user_category
       authState.profile.organization = user_profile.user_organization
       authState.profile.gender = user_profile.gender
-      authState.profile.dob = user_profile.birth_date // Assuming Frappe standard field
-      authState.profile.mobileNumber = user_profile.mobile_no // Assuming Frappe standard field
+      authState.profile.dob = user_profile.birth_date 
+      authState.profile.mobileNumber = user_profile.mobile_no 
       authState.profile.bio = user_profile.bio
       authState.profile.interests = user_profile.interests
       authState.profile.badges = user_profile.badges
@@ -112,9 +92,9 @@ export async function checkAuth() {
       // Cache the fresh data!
       saveCachedAuth()
 
-      // Fetch the image in the background and cache the base64!
-      if (user_profile.user_image) {
-        fetchImageAsBase64(user_profile.user_image).then(base64 => {
+      // 4. Only attempt to fetch and convert to base64 if it's a REAL image url
+      if (sanitizedImage) {
+        fetchImageAsBase64(sanitizedImage).then(base64 => {
           if (base64) {
             authState.profile.imageBase64 = base64;
             saveCachedAuth();
@@ -123,9 +103,14 @@ export async function checkAuth() {
       }
     }
   } catch (error) {
-    console.log("Error: ", error)
+    console.error("Auth Check Failed: ", error)
     authState.isLoggedIn = false;
     clearCachedAuth() // Clear cache if the session is dead
+  } finally {
+    // 🛑 THIS IS THE MASTER LOCK-PICK 🛑
+    // No matter if the API fails, succeeds, or throws an error, 
+    // this line ALWAYS runs, turning off the loading screen and unlocking your app!
+    authState.isInitialLoad = false;
   }
 }
 

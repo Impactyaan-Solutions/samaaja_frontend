@@ -1,28 +1,70 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Search, Filter, Award } from 'lucide-vue-next'
 import { getLeaderboard } from '@/services/api'
 import AppHeader from '@/components/common/AppHeader.vue'
 
-const { t } = useI18n() // Initialize i18n
+const { t, locale } = useI18n({ useScope: 'global' })
 const scope = ref('organisation')
 const list = ref([])
+const originalList = ref([]) // store originals for re-translation
 const isLoading = ref(true)
+const isTranslating = ref(false)
+
+const translateText = async (text, targetLang) => {
+  if (!text) return text
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`
+    const response = await fetch(url)
+    const data = await response.json()
+    return data[0].map(item => item[0]).join('')
+  } catch (error) {
+    console.error("Translation failed:", error)
+    return text
+  }
+}
+
+const translateList = async (targetLang) => {
+  if (!originalList.value.length) return
+  isTranslating.value = true
+
+  // Translate all roles in parallel
+  const translatedRoles = await Promise.all(
+    originalList.value.map(user => translateText(user.role, targetLang))
+  )
+
+  list.value = originalList.value.map((user, index) => ({
+    ...user,
+    role: translatedRoles[index]
+  }))
+
+  isTranslating.value = false
+}
+
+watch(locale, (newLang) => {
+  translateList(newLang)
+})
 
 onMounted(async () => {
   try {
     const data = await getLeaderboard()
-    list.value = data.map((item, index) => ({
+    originalList.value = data.map((item, index) => ({
       rank: index + 1,
       name: item.full_name,
       role: item.user_category,
       actions: item.action_count,
       avatar: item.user_image || (item.full_name ? item.full_name.charAt(0) : '?'),
-      verified: false, 
+      verified: false,
       email: item.user,
-      isCurrentUser: false 
+      isCurrentUser: false
     }))
+
+    list.value = [...originalList.value]
+
+    // Translate on mount using saved language
+    const savedLang = localStorage.getItem('lang') || 'en'
+    await translateList(savedLang)
   } catch (error) {
     console.error("Error loading leaderboard:", error)
   } finally {
@@ -81,7 +123,7 @@ onMounted(async () => {
             {{ user.rank }}
           </span>
           <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 overflow-hidden">
-            <img v-if="user.avatar.length > 2" :src="user.avatar" class="w-full h-full object-cover" />
+            <img v-if="user.avatar.length > 2" :src="user.avatar" referrerpolicy="no-referrer" class="w-full h-full object-cover" />
             <span v-else class="font-bold">{{ user.avatar }}</span>
           </div>
           <div>
@@ -89,7 +131,12 @@ onMounted(async () => {
               <h4 class="font-bold text-gray-900 text-sm">{{ user.name }}</h4>
               <Award v-if="user.verified" class="w-3.5 h-3.5 text-green-500" />
             </div>
-            <p class="text-xs text-gray-500 mt-0.5">{{ user.role }}</p>
+            <p
+              class="text-xs text-gray-500 mt-0.5 transition-opacity duration-300"
+              :class="{ 'opacity-50': isTranslating }"
+            >
+              {{ user.role }}
+            </p>
           </div>
         </div>
         

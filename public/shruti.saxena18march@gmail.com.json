@@ -1,0 +1,36 @@
+{
+  "actionsList": [
+    {
+      "id": 1,
+      "title": "Tree Plantation Drive",
+      "impact": "20 people",
+      "status": "Completed"
+    },
+    {
+      "id": 2,
+      "title": "Neighborhood Clean-Up Drive",
+      "impact": "15 volunteers",
+      "status": "Completed"
+    }
+  ],
+  "postsList": [
+    {
+      "id": 101,
+      "content": "Community meeting update",
+      "likes": 15,
+      "comments": 3
+    },
+    {
+      "id": 102,
+      "content": "Provided football training to students this morning! Great energy from everyone.",
+      "likes": 3,
+      "comments": 1
+    },
+    {
+      "id": 103,
+      "content": "Weekend Neighborhood Park Clean-Up Drive Success! A huge thank you to everyone who showed up.",
+      "likes": 24,
+      "comments": 7
+    }
+  ]
+}

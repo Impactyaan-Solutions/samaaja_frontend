@@ -166,7 +166,7 @@ const handleLogout = async () => {
     </div>
 
     <div class="px-5 mt-8">
-      <h3 class="font-bold text-gray-900 mb-4 px-1 text-lg">{{ t('settings.support_title') }}</h3>
+      <h3 class="font-bold text-gray-900 mb-4 px-1 text-lg">{{ t('settings.support') }}</h3>
       <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
         <button class="w-full px-4 py-4 flex items-center justify-between border-b border-gray-50 hover:bg-gray-50 transition-colors">
           <div class="flex items-center space-x-3">
