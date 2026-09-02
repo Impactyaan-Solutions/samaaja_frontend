@@ -1,15 +1,28 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Search, Loader2, CalendarDays, Clock3, Sparkles } from 'lucide-vue-next'
+import {
+  MapPin,
+  Tag,
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  Loader2
+} from 'lucide-vue-next'
+
 import AppHeader from '@/components/common/AppHeader.vue'
-import { createVolunteerInterest, getVolunteerListings } from '@/services/api'
-import { authState } from '@/auth'
+import { getVolunteerListings } from '@/services/api'
 
 const listings = ref([])
 const loading = ref(true)
 const error = ref(null)
-const query = ref('')
-const interestedIds = ref([])
+
+const selectedLocation = ref('')
+const selectedCategory = ref('')
+const selectedSkill = ref('')
+
+const showLocationFilter = ref(false)
+const showCategoryFilter = ref(false)
+const showSkillFilter = ref(false)
 
 onMounted(async () => {
   try {
@@ -21,159 +34,425 @@ onMounted(async () => {
   }
 })
 
-const filteredListings = computed(() => {
-  const term = query.value.trim().toLowerCase()
-  if (!term) return listings.value
+/*
+ * Filter options are generated from the opportunities
+ * returned by the existing API.
+ */
+const locations = computed(() => {
+  const values = listings.value
+    .map((item) => {
+      if (typeof item.location === 'object') {
+        return item.location?.city || item.location?.name
+      }
 
-  return listings.value.filter((item) => {
-    const haystack = [
-      item.title,
-      item.description,
-      item.category,
-      item.type,
-      item.start_date,
-      item.end_date
-    ]
+      return item.location
+    })
+    .filter(Boolean)
+
+  return [...new Set(values)]
+})
+
+const categories = computed(() => {
+  return [
+    ...new Set(
+      listings.value
+        .map((item) => item.category)
+        .filter(Boolean)
+    )
+  ]
+})
+
+const extractSkills = (item) => {
+  const skills = item.skills_needed || item.skills || []
+
+  if (Array.isArray(skills)) {
+    return skills
+      .map((skill) => {
+        if (typeof skill === 'string') return skill
+
+        return (
+          skill?.skill ||
+          skill?.skill_name ||
+          skill?.name ||
+          skill?.skills
+        )
+      })
       .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
+  }
 
-    return haystack.includes(term)
+  if (typeof skills === 'string') {
+    return skills
+      .split(',')
+      .map((skill) => skill.trim())
+      .filter(Boolean)
+  }
+
+  return []
+}
+
+const skills = computed(() => {
+  const allSkills = listings.value.flatMap(extractSkills)
+
+  return [...new Set(allSkills)]
+})
+
+const getLocation = (item) => {
+  if (typeof item.location === 'object') {
+    return item.location?.city || item.location?.name || 'Location'
+  }
+
+  return item.location || 'Location'
+}
+
+const filteredListings = computed(() => {
+  return listings.value.filter((item) => {
+    const locationMatch =
+      !selectedLocation.value ||
+      getLocation(item) === selectedLocation.value
+
+    const categoryMatch =
+      !selectedCategory.value ||
+      item.category === selectedCategory.value
+
+    const itemSkills = extractSkills(item)
+
+    const skillMatch =
+      !selectedSkill.value ||
+      itemSkills.includes(selectedSkill.value)
+
+    return locationMatch && categoryMatch && skillMatch
   })
 })
 
-const formatDate = (value) => {
-  if (!value) return 'Flexible schedule'
+const clearFilters = () => {
+  selectedLocation.value = ''
+  selectedCategory.value = ''
+  selectedSkill.value = ''
 
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  return date.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  })
+  showLocationFilter.value = false
+  showCategoryFilter.value = false
+  showSkillFilter.value = false
 }
 
-const typeStyles = (type) => {
-  switch (type) {
-    case 'Ongoing':
-      return 'bg-green-50 text-green-700 border border-green-100'
-    case 'One-time':
-      return 'bg-amber-50 text-amber-700 border border-amber-100'
-    default:
-      return 'bg-blue-50 text-blue-700 border border-blue-100'
-  }
+const selectLocation = (value) => {
+  selectedLocation.value = value
+  showLocationFilter.value = false
 }
 
-const handleInterest = async (item) => {
-  const opportunityId = item?.name
+const selectCategory = (value) => {
+  selectedCategory.value = value
+  showCategoryFilter.value = false
+}
 
-  if (!opportunityId) {
-    console.error('Volunteer opportunity missing name/id', item)
-    return
+const selectSkill = (value) => {
+  selectedSkill.value = value
+  showSkillFilter.value = false
+}
+
+const hasFilters = computed(() => {
+  return (
+    selectedLocation.value ||
+    selectedCategory.value ||
+    selectedSkill.value
+  )
+})
+
+const formatDescription = (description) => {
+  if (!description) {
+    return 'Volunteer and make a meaningful difference in your community.'
   }
 
-  const user = authState.email || localStorage.getItem('user')
-
-  if (!user) {
-    console.error('No logged-in user found for volunteer interest submission')
-    return
+  if (description.length > 125) {
+    return `${description.substring(0, 125)}...`
   }
 
-  if (interestedIds.value.includes(opportunityId)) return
-
-  try {
-    interestedIds.value.push(opportunityId)
-    await createVolunteerInterest({
-      user,
-      volunteer_opportunity: opportunityId
-    })
-  } catch (err) {
-    console.error('Failed to submit volunteer interest', err)
-    interestedIds.value = interestedIds.value.filter((id) => id !== opportunityId)
-  }
+  return description
 }
 </script>
 
 <template>
-  <div class="min-h-full bg-gray-50/50 pb-8 text-gray-800">
+  <div class="min-h-full bg-[#f7f9fb] pb-24 text-[#172033]">
     <AppHeader />
 
-    <div class="px-5 mt-4">
-      <div class="relative">
-        <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          v-model="query"
-          type="text"
-          placeholder="Search opportunity or category"
-          class="w-full bg-white border border-gray-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm"
-        />
+    <!-- Figma style profile/header area -->
+    <div class="px-5 pt-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">
+            Volunteer Opportunity
+          </h1>
+
+          <p class="mt-1 text-xs text-gray-500">
+            Find opportunities and make an impact
+          </p>
+        </div>
+
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600"
+        >
+          <SlidersHorizontal class="h-5 w-5" />
+        </div>
       </div>
     </div>
 
-    <div v-if="loading" class="px-5 mt-10 text-center text-gray-500 flex flex-col items-center">
-      <Loader2 class="w-8 h-8 animate-spin text-primary-500 mb-2" />
-      <span>Loading volunteer opportunities...</span>
+    <!-- Filters -->
+    <div class="relative mt-4 px-5">
+      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <!-- Location -->
+        <button
+          @click="
+            showLocationFilter = !showLocationFilter;
+            showCategoryFilter = false;
+            showSkillFilter = false
+          "
+          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          :class="
+            selectedLocation
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-200 bg-white text-gray-700'
+          "
+        >
+          <MapPin class="h-3.5 w-3.5" />
+
+          <span>
+            {{ selectedLocation || 'Location' }}
+          </span>
+
+          <ChevronDown class="h-3 w-3" />
+        </button>
+
+        <!-- Category -->
+        <button
+          @click="
+            showCategoryFilter = !showCategoryFilter;
+            showLocationFilter = false;
+            showSkillFilter = false
+          "
+          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          :class="
+            selectedCategory
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-200 bg-white text-gray-700'
+          "
+        >
+          <Tag class="h-3.5 w-3.5" />
+
+          <span>
+            {{ selectedCategory || 'Category' }}
+          </span>
+
+          <ChevronDown class="h-3 w-3" />
+        </button>
+
+        <!-- Skills -->
+        <button
+          @click="
+            showSkillFilter = !showSkillFilter;
+            showLocationFilter = false;
+            showCategoryFilter = false
+          "
+          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          :class="
+            selectedSkill
+              ? 'border-primary-500 bg-primary-50 text-primary-700'
+              : 'border-gray-200 bg-white text-gray-700'
+          "
+        >
+          <SlidersHorizontal class="h-3.5 w-3.5" />
+
+          <span>
+            {{ selectedSkill || 'Skills' }}
+          </span>
+
+          <ChevronDown class="h-3 w-3" />
+        </button>
+
+        <!-- Clear -->
+        <button
+          v-if="hasFilters"
+          @click="clearFilters"
+          class="flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500"
+        >
+          <X class="h-3.5 w-3.5" />
+          Clear
+        </button>
+      </div>
+
+      <!-- Location dropdown -->
+      <div
+        v-if="showLocationFilter"
+        class="absolute left-5 right-5 top-12 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+      >
+        <button
+          @click="selectLocation('')"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          All locations
+        </button>
+
+        <button
+          v-for="location in locations"
+          :key="location"
+          @click="selectLocation(location)"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          {{ location }}
+        </button>
+
+        <div
+          v-if="locations.length === 0"
+          class="px-3 py-2 text-sm text-gray-400"
+        >
+          No locations available
+        </div>
+      </div>
+
+      <!-- Category dropdown -->
+      <div
+        v-if="showCategoryFilter"
+        class="absolute left-5 right-5 top-12 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+      >
+        <button
+          @click="selectCategory('')"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          All categories
+        </button>
+
+        <button
+          v-for="category in categories"
+          :key="category"
+          @click="selectCategory(category)"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          {{ category }}
+        </button>
+
+        <div
+          v-if="categories.length === 0"
+          class="px-3 py-2 text-sm text-gray-400"
+        >
+          No categories available
+        </div>
+      </div>
+
+      <!-- Skills dropdown -->
+      <div
+        v-if="showSkillFilter"
+        class="absolute left-5 right-5 top-12 z-30 max-h-64 overflow-y-auto rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+      >
+        <button
+          @click="selectSkill('')"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          All skills
+        </button>
+
+        <button
+          v-for="skill in skills"
+          :key="skill"
+          @click="selectSkill(skill)"
+          class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
+        >
+          {{ skill }}
+        </button>
+
+        <div
+          v-if="skills.length === 0"
+          class="px-3 py-2 text-sm text-gray-400"
+        >
+          No skills available
+        </div>
+      </div>
     </div>
 
-    <div v-else-if="error" class="px-5 mt-10 text-center text-red-500">
-      {{ error }}
+    <!-- Loading -->
+    <div
+      v-if="loading"
+      class="flex flex-col items-center justify-center px-5 pt-16 text-center"
+    >
+      <Loader2 class="mb-3 h-7 w-7 animate-spin text-primary-500" />
+
+      <p class="text-sm text-gray-500">
+        Loading volunteer opportunities...
+      </p>
     </div>
 
-    <div v-else-if="filteredListings.length === 0" class="px-5 mt-10 text-center text-gray-500">
-      No volunteer opportunities available yet.
+    <!-- Error -->
+    <div
+      v-else-if="error"
+      class="px-5 pt-12 text-center"
+    >
+      <p class="text-sm text-red-500">
+        {{ error }}
+      </p>
     </div>
 
-    <div v-else class="px-5 mt-5 space-y-4">
+    <!-- Empty -->
+    <div
+      v-else-if="filteredListings.length === 0"
+      class="px-5 pt-12 text-center"
+    >
+      <div
+        class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100"
+      >
+        <SlidersHorizontal class="h-6 w-6 text-gray-400" />
+      </div>
+
+      <h3 class="mt-4 text-base font-semibold text-gray-800">
+        No opportunities found
+      </h3>
+
+      <p class="mt-1 text-sm text-gray-500">
+        Try changing your filters.
+      </p>
+    </div>
+
+    <!-- Opportunity cards -->
+    <div
+      v-else
+      class="space-y-3 px-5 pb-6 pt-4"
+    >
       <div
         v-for="item in filteredListings"
         :key="item.name || item.title"
-        class="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_18px_rgba(17,24,39,0.04)] p-4"
+        class="rounded-xl border border-gray-100 bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
       >
-        <div class="flex items-center justify-between gap-3">
-          <span class="inline-flex items-center rounded-full bg-primary-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-700">
-            {{ item.category || 'Community' }}
-          </span>
-          <span :class="['inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]', typeStyles(item.type)]">
-            {{ item.type || 'Open' }}
-          </span>
+        <!-- Category -->
+        <div
+          class="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
+        >
+          {{ item.category || 'Community' }}
         </div>
 
-        <h3 class="mt-4 text-xl font-bold text-gray-900 leading-tight">
-          {{ item.title }}
-        </h3>
+        <!-- Title -->
+        <h2 class="mt-2 text-sm font-bold leading-5 text-gray-900">
+          {{ item.title || 'Volunteer Opportunity' }}
+        </h2>
 
-        <p class="mt-2 text-sm leading-6 text-gray-600">
-          {{ item.description }}
+        <!-- Description -->
+        <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          {{ formatDescription(item.description) }}
         </p>
 
-        <div class="mt-4 space-y-2 text-sm text-gray-600">
-          <div class="flex items-center gap-2">
-            <CalendarDays class="w-4 h-4 text-primary-500" />
-            <span>{{ formatDate(item.start_date) }}</span>
-            <span v-if="item.end_date" class="text-gray-400">→</span>
-            <span v-if="item.end_date">{{ formatDate(item.end_date) }}</span>
-          </div>
+        <!-- Location + button -->
+        <div
+          class="mt-3 flex items-center justify-between gap-3"
+        >
+          <div class="flex min-w-0 items-center gap-1.5 text-xs text-gray-500">
+            <MapPin
+              class="h-3.5 w-3.5 shrink-0 text-gray-400"
+            />
 
-          <div class="flex items-center gap-2">
-            <Clock3 class="w-4 h-4 text-primary-500" />
-            <span>{{ item.type || 'Flexible timing' }}</span>
-          </div>
-        </div>
-
-        <div class="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
-          <div class="flex items-center gap-2 text-xs text-gray-500">
-            <Sparkles class="w-4 h-4 text-amber-500" />
-            <span>Posted by {{ item.owner || 'Administrator' }}</span>
+            <span class="truncate">
+              {{ getLocation(item) }}
+            </span>
           </div>
 
           <button
-            @click="handleInterest(item)"
-            :disabled="interestedIds.includes(item.name)"
-            class="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm hover:bg-primary-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700"
           >
-            {{ interestedIds.includes(item.name) ? 'Interested' : 'I’m interested' }}
+            View Details
           </button>
         </div>
       </div>
