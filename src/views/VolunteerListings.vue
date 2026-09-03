@@ -5,7 +5,6 @@ import {
   Tag,
   SlidersHorizontal,
   X,
-  ChevronDown,
   Loader2
 } from 'lucide-vue-next'
 
@@ -34,10 +33,6 @@ onMounted(async () => {
   }
 })
 
-/*
- * Filter options are generated from the opportunities
- * returned by the existing API.
- */
 const locations = computed(() => {
   const values = listings.value
     .map((item) => {
@@ -68,7 +63,9 @@ const extractSkills = (item) => {
   if (Array.isArray(skills)) {
     return skills
       .map((skill) => {
-        if (typeof skill === 'string') return skill
+        if (typeof skill === 'string') {
+          return skill
+        }
 
         return (
           skill?.skill ||
@@ -92,11 +89,14 @@ const extractSkills = (item) => {
 
 const skills = computed(() => {
   const allSkills = listings.value.flatMap(extractSkills)
-
   return [...new Set(allSkills)]
 })
 
 const getLocation = (item) => {
+  /*
+   * Location backend/doctype mapping abhi available nahi hai.
+   * Isliye Figma ke according placeholder rakha hai.
+   */
   if (typeof item.location === 'object') {
     return item.location?.city || item.location?.name || 'Location'
   }
@@ -124,15 +124,39 @@ const filteredListings = computed(() => {
   })
 })
 
-const clearFilters = () => {
-  selectedLocation.value = ''
-  selectedCategory.value = ''
-  selectedSkill.value = ''
+const hasFilters = computed(() => {
+  return Boolean(
+    selectedLocation.value ||
+    selectedCategory.value ||
+    selectedSkill.value
+  )
+})
 
-  showLocationFilter.value = false
+/* -----------------------------
+   Filter toggle functions
+----------------------------- */
+
+const toggleLocationFilter = () => {
+  showLocationFilter.value = !showLocationFilter.value
   showCategoryFilter.value = false
   showSkillFilter.value = false
 }
+
+const toggleCategoryFilter = () => {
+  showCategoryFilter.value = !showCategoryFilter.value
+  showLocationFilter.value = false
+  showSkillFilter.value = false
+}
+
+const toggleSkillFilter = () => {
+  showSkillFilter.value = !showSkillFilter.value
+  showLocationFilter.value = false
+  showCategoryFilter.value = false
+}
+
+/* -----------------------------
+   Filter selection functions
+----------------------------- */
 
 const selectLocation = (value) => {
   selectedLocation.value = value
@@ -149,63 +173,53 @@ const selectSkill = (value) => {
   showSkillFilter.value = false
 }
 
-const hasFilters = computed(() => {
-  return (
-    selectedLocation.value ||
-    selectedCategory.value ||
-    selectedSkill.value
-  )
-})
+/* -----------------------------
+   Clear filters
+----------------------------- */
+
+const clearFilters = () => {
+  selectedLocation.value = ''
+  selectedCategory.value = ''
+  selectedSkill.value = ''
+
+  showLocationFilter.value = false
+  showCategoryFilter.value = false
+  showSkillFilter.value = false
+}
+
+/* -----------------------------
+   Description
+----------------------------- */
 
 const formatDescription = (description) => {
   if (!description) {
-    return 'Volunteer and make a meaningful difference in your community.'
+    return 'Volunteer and make a meaningful difference in your community...'
   }
 
-  if (description.length > 125) {
-    return `${description.substring(0, 125)}...`
+  if (description.length > 95) {
+    return `${description.substring(0, 95)}...`
   }
 
-  return description
+  return `${description}...`
 }
 </script>
 
 <template>
   <div class="min-h-full bg-[#f7f9fb] pb-24 text-[#172033]">
+
     <AppHeader />
 
-    <!-- Figma style profile/header area -->
-    <div class="px-5 pt-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-bold text-gray-900">
-            Volunteer Opportunity
-          </h1>
+    <!-- =========================
+         FILTERS
+    ========================== -->
+    <div class="relative px-5 pt-4">
 
-          <p class="mt-1 text-xs text-gray-500">
-            Find opportunities and make an impact
-          </p>
-        </div>
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
 
-        <div
-          class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600"
-        >
-          <SlidersHorizontal class="h-5 w-5" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="relative mt-4 px-5">
-      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         <!-- Location -->
         <button
-          @click="
-            showLocationFilter = !showLocationFilter;
-            showCategoryFilter = false;
-            showSkillFilter = false
-          "
-          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          @click="toggleLocationFilter"
+          class="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition"
           :class="
             selectedLocation
               ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -217,18 +231,12 @@ const formatDescription = (description) => {
           <span>
             {{ selectedLocation || 'Location' }}
           </span>
-
-          <ChevronDown class="h-3 w-3" />
         </button>
 
         <!-- Category -->
         <button
-          @click="
-            showCategoryFilter = !showCategoryFilter;
-            showLocationFilter = false;
-            showSkillFilter = false
-          "
-          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          @click="toggleCategoryFilter"
+          class="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition"
           :class="
             selectedCategory
               ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -240,18 +248,12 @@ const formatDescription = (description) => {
           <span>
             {{ selectedCategory || 'Category' }}
           </span>
-
-          <ChevronDown class="h-3 w-3" />
         </button>
 
         <!-- Skills -->
         <button
-          @click="
-            showSkillFilter = !showSkillFilter;
-            showLocationFilter = false;
-            showCategoryFilter = false
-          "
-          class="flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition"
+          @click="toggleSkillFilter"
+          class="flex h-9 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition"
           :class="
             selectedSkill
               ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -263,25 +265,25 @@ const formatDescription = (description) => {
           <span>
             {{ selectedSkill || 'Skills' }}
           </span>
-
-          <ChevronDown class="h-3 w-3" />
         </button>
 
-        <!-- Clear -->
+        <!-- Clear filters -->
         <button
-          v-if="hasFilters"
           @click="clearFilters"
-          class="flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-500"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500"
+          aria-label="Clear filters"
         >
-          <X class="h-3.5 w-3.5" />
-          Clear
+          <X class="h-4 w-4" />
         </button>
+
       </div>
 
-      <!-- Location dropdown -->
+      <!-- =========================
+           LOCATION DROPDOWN
+      ========================== -->
       <div
         v-if="showLocationFilter"
-        class="absolute left-5 right-5 top-12 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+        class="absolute left-5 right-5 top-14 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
       >
         <button
           @click="selectLocation('')"
@@ -307,10 +309,12 @@ const formatDescription = (description) => {
         </div>
       </div>
 
-      <!-- Category dropdown -->
+      <!-- =========================
+           CATEGORY DROPDOWN
+      ========================== -->
       <div
         v-if="showCategoryFilter"
-        class="absolute left-5 right-5 top-12 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+        class="absolute left-5 right-5 top-14 z-30 rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
       >
         <button
           @click="selectCategory('')"
@@ -336,10 +340,12 @@ const formatDescription = (description) => {
         </div>
       </div>
 
-      <!-- Skills dropdown -->
+      <!-- =========================
+           SKILLS DROPDOWN
+      ========================== -->
       <div
         v-if="showSkillFilter"
-        class="absolute left-5 right-5 top-12 z-30 max-h-64 overflow-y-auto rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
+        class="absolute left-5 right-5 top-14 z-30 max-h-64 overflow-y-auto rounded-xl border border-gray-100 bg-white p-2 shadow-lg"
       >
         <button
           @click="selectSkill('')"
@@ -364,21 +370,28 @@ const formatDescription = (description) => {
           No skills available
         </div>
       </div>
+
     </div>
 
-    <!-- Loading -->
+    <!-- =========================
+         LOADING
+    ========================== -->
     <div
       v-if="loading"
       class="flex flex-col items-center justify-center px-5 pt-16 text-center"
     >
-      <Loader2 class="mb-3 h-7 w-7 animate-spin text-primary-500" />
+      <Loader2
+        class="mb-3 h-7 w-7 animate-spin text-primary-500"
+      />
 
       <p class="text-sm text-gray-500">
         Loading volunteer opportunities...
       </p>
     </div>
 
-    <!-- Error -->
+    <!-- =========================
+         ERROR
+    ========================== -->
     <div
       v-else-if="error"
       class="px-5 pt-12 text-center"
@@ -388,7 +401,9 @@ const formatDescription = (description) => {
       </p>
     </div>
 
-    <!-- Empty -->
+    <!-- =========================
+         EMPTY
+    ========================== -->
     <div
       v-else-if="filteredListings.length === 0"
       class="px-5 pt-12 text-center"
@@ -408,16 +423,20 @@ const formatDescription = (description) => {
       </p>
     </div>
 
-    <!-- Opportunity cards -->
+    <!-- =========================
+         OPPORTUNITY CARDS
+    ========================== -->
     <div
       v-else
       class="space-y-3 px-5 pb-6 pt-4"
     >
+
       <div
         v-for="item in filteredListings"
         :key="item.name || item.title"
         class="rounded-xl border border-gray-100 bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
       >
+
         <!-- Category -->
         <div
           class="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
@@ -435,11 +454,13 @@ const formatDescription = (description) => {
           {{ formatDescription(item.description) }}
         </p>
 
-        <!-- Location + button -->
-        <div
-          class="mt-3 flex items-center justify-between gap-3"
-        >
-          <div class="flex min-w-0 items-center gap-1.5 text-xs text-gray-500">
+        <!-- Bottom row -->
+        <div class="mt-3 flex items-center justify-between gap-3">
+
+          <!-- Location -->
+          <div
+            class="flex min-w-0 items-center gap-1.5 text-xs text-gray-500"
+          >
             <MapPin
               class="h-3.5 w-3.5 shrink-0 text-gray-400"
             />
@@ -449,13 +470,18 @@ const formatDescription = (description) => {
             </span>
           </div>
 
+          <!-- View Details -->
           <button
             class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700"
           >
             View Details
           </button>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
 </template>
