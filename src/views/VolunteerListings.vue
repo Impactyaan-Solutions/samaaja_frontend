@@ -26,14 +26,33 @@ const showLocationFilter = ref(false)
 const showCategoryFilter = ref(false)
 const showSkillFilter = ref(false)
 
-onMounted(async () => {
+const fetchListings = async () => {
   try {
-    listings.value = await getVolunteerListings()
+    loading.value = true
+    error.value = null
+
+    const filters = {
+      locations: selectedLocation.value
+        ? [selectedLocation.value]
+        : [],
+      categories: selectedCategory.value
+        ? [selectedCategory.value]
+        : [],
+      skills: selectedSkill.value
+        ? [selectedSkill.value]
+        : []
+    }
+
+    listings.value = await getVolunteerListings(filters)
   } catch (e) {
     error.value = e.message || 'Failed to load volunteer opportunities.'
   } finally {
     loading.value = false
   }
+}
+
+onMounted(() => {
+  fetchListings()
 })
 
 const locations = computed(() => {
@@ -107,25 +126,7 @@ const getLocation = (item) => {
   return item.location || 'Location'
 }
 
-const filteredListings = computed(() => {
-  return listings.value.filter((item) => {
-    const locationMatch =
-      !selectedLocation.value ||
-      getLocation(item) === selectedLocation.value
 
-    const categoryMatch =
-      !selectedCategory.value ||
-      item.category === selectedCategory.value
-
-    const itemSkills = extractSkills(item)
-
-    const skillMatch =
-      !selectedSkill.value ||
-      itemSkills.includes(selectedSkill.value)
-
-    return locationMatch && categoryMatch && skillMatch
-  })
-})
 
 const hasFilters = computed(() => {
   return Boolean(
@@ -161,26 +162,32 @@ const toggleSkillFilter = () => {
    Filter selection functions
 ----------------------------- */
 
-const selectLocation = (value) => {
+const selectLocation = async (value) => {
   selectedLocation.value = value
   showLocationFilter.value = false
+
+  await fetchListings()
 }
 
-const selectCategory = (value) => {
+const selectCategory = async (value) => {
   selectedCategory.value = value
   showCategoryFilter.value = false
+
+  await fetchListings()
 }
 
-const selectSkill = (value) => {
+const selectSkill = async (value) => {
   selectedSkill.value = value
   showSkillFilter.value = false
+
+  await fetchListings()
 }
 
 /* -----------------------------
    Clear filters
 ----------------------------- */
 
-const clearFilters = () => {
+const clearFilters = async () => {
   selectedLocation.value = ''
   selectedCategory.value = ''
   selectedSkill.value = ''
@@ -188,6 +195,8 @@ const clearFilters = () => {
   showLocationFilter.value = false
   showCategoryFilter.value = false
   showSkillFilter.value = false
+
+  await fetchListings()
 }
 
 /* -----------------------------
@@ -408,7 +417,7 @@ const formatDescription = (description) => {
          EMPTY
     ========================== -->
     <div
-      v-else-if="filteredListings.length === 0"
+      v-else-if="listings.length === 0"
       class="px-5 pt-12 text-center"
     >
       <div
@@ -435,7 +444,7 @@ const formatDescription = (description) => {
     >
 
       <div
-        v-for="item in filteredListings"
+        v-for="item in listings"
         :key="item.name || item.title"
         class="rounded-xl border border-gray-100 bg-white p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
       >
