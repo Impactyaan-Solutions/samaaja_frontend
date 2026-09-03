@@ -207,5 +207,24 @@
     "placeholder": "एक टिप्पणी लिखें...",
     "edit": "संपादित करें",
     "delete": "हटाएं"
+  },
+  "volunteerListings": {
+    "location": "स्थान",
+    "category": "श्रेणी",
+    "skills": "कौशल",
+    "allLocations": "सभी स्थान",
+    "allCategories": "सभी श्रेणियाँ",
+    "allSkills": "सभी कौशल",
+    "noLocations": "कोई स्थान उपलब्ध नहीं है",
+    "noCategories": "कोई श्रेणी उपलब्ध नहीं है",
+    "noSkills": "कोई कौशल उपलब्ध नहीं है",
+    "loading": "स्वयंसेवी अवसर लोड हो रहे हैं...",
+    "noOpportunities": "कोई अवसर नहीं मिला",
+    "tryChangingFilters": "अपने फ़िल्टर बदलकर देखें।",
+    "viewDetails": "विवरण देखें",
+    "community": "समुदाय",
+    "opportunity": "स्वयंसेवी अवसर",
+    "clearFilters": "फ़िल्टर साफ़ करें",
+    "defaultDescription": "स्वयंसेवा करें और अपने समुदाय में सार्थक बदलाव लाएं।"
   }
 }

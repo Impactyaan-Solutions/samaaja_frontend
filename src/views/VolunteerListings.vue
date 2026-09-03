@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   MapPin,
   Tag,
@@ -10,6 +11,8 @@ import {
 
 import AppHeader from '@/components/common/AppHeader.vue'
 import { getVolunteerListings } from '@/services/api'
+
+const { t } = useI18n()
 
 const listings = ref([])
 const loading = ref(true)
@@ -193,14 +196,14 @@ const clearFilters = () => {
 
 const formatDescription = (description) => {
   if (!description) {
-    return 'Volunteer and make a meaningful difference in your community...'
+    return t('volunteerListings.defaultDescription')
   }
 
   if (description.length > 95) {
     return `${description.substring(0, 95)}...`
   }
 
-  return `${description}...`
+  return description
 }
 </script>
 
@@ -229,7 +232,7 @@ const formatDescription = (description) => {
           <MapPin class="h-3.5 w-3.5" />
 
           <span>
-            {{ selectedLocation || 'Location' }}
+            {{ selectedLocation || t('volunteerListings.location') }}
           </span>
         </button>
 
@@ -246,7 +249,7 @@ const formatDescription = (description) => {
           <Tag class="h-3.5 w-3.5" />
 
           <span>
-            {{ selectedCategory || 'Category' }}
+            {{ selectedCategory || t('volunteerListings.category') }}
           </span>
         </button>
 
@@ -263,7 +266,7 @@ const formatDescription = (description) => {
           <SlidersHorizontal class="h-3.5 w-3.5" />
 
           <span>
-            {{ selectedSkill || 'Skills' }}
+            {{ selectedSkill || t('volunteerListings.skills') }}
           </span>
         </button>
 
@@ -271,7 +274,7 @@ const formatDescription = (description) => {
         <button
           @click="clearFilters"
           class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500"
-          aria-label="Clear filters"
+          :aria-label="t('volunteerListings.clearFilters')"
         >
           <X class="h-4 w-4" />
         </button>
@@ -289,7 +292,7 @@ const formatDescription = (description) => {
           @click="selectLocation('')"
           class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
         >
-          All locations
+          {{ t('volunteerListings.allLocations') }}
         </button>
 
         <button
@@ -305,7 +308,7 @@ const formatDescription = (description) => {
           v-if="locations.length === 0"
           class="px-3 py-2 text-sm text-gray-400"
         >
-          No locations available
+          {{ t('volunteerListings.noLocations') }}
         </div>
       </div>
 
@@ -320,7 +323,7 @@ const formatDescription = (description) => {
           @click="selectCategory('')"
           class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
         >
-          All categories
+          {{ t('volunteerListings.allCategories') }}
         </button>
 
         <button
@@ -336,7 +339,7 @@ const formatDescription = (description) => {
           v-if="categories.length === 0"
           class="px-3 py-2 text-sm text-gray-400"
         >
-          No categories available
+          {{ t('volunteerListings.noCategories') }}
         </div>
       </div>
 
@@ -351,7 +354,7 @@ const formatDescription = (description) => {
           @click="selectSkill('')"
           class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-50"
         >
-          All skills
+          {{ t('volunteerListings.allSkills') }}
         </button>
 
         <button
@@ -367,7 +370,7 @@ const formatDescription = (description) => {
           v-if="skills.length === 0"
           class="px-3 py-2 text-sm text-gray-400"
         >
-          No skills available
+          {{ t('volunteerListings.noSkills') }}
         </div>
       </div>
 
@@ -385,7 +388,7 @@ const formatDescription = (description) => {
       />
 
       <p class="text-sm text-gray-500">
-        Loading volunteer opportunities...
+        {{ t('volunteerListings.loading') }}
       </p>
     </div>
 
@@ -415,11 +418,11 @@ const formatDescription = (description) => {
       </div>
 
       <h3 class="mt-4 text-base font-semibold text-gray-800">
-        No opportunities found
+        {{ t('volunteerListings.noOpportunities') }}
       </h3>
 
       <p class="mt-1 text-sm text-gray-500">
-        Try changing your filters.
+        {{ t('volunteerListings.tryChangingFilters') }}
       </p>
     </div>
 
@@ -441,12 +444,12 @@ const formatDescription = (description) => {
         <div
           class="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-blue-700"
         >
-          {{ item.category || 'Community' }}
+          {{ item.category || t('volunteerListings.community') }}
         </div>
 
         <!-- Title -->
         <h2 class="mt-2 text-sm font-bold leading-5 text-gray-900">
-          {{ item.title || 'Volunteer Opportunity' }}
+          {{ item.title || t('volunteerListings.opportunity') }}
         </h2>
 
         <!-- Description -->
@@ -474,7 +477,7 @@ const formatDescription = (description) => {
           <button
             class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700"
           >
-            View Details
+            {{ t('volunteerListings.viewDetails') }}
           </button>
 
         </div>

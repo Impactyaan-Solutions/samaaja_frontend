@@ -209,5 +209,24 @@
     "placeholder": "Write a comment...",
     "edit": "Edit",
     "delete": "Delete"
+  },
+  "volunteerListings": {
+    "location": "Location",
+    "category": "Category",
+    "skills": "Skills",
+    "allLocations": "All locations",
+    "allCategories": "All categories",
+    "allSkills": "All skills",
+    "noLocations": "No locations available",
+    "noCategories": "No categories available",
+    "noSkills": "No skills available",
+    "loading": "Loading volunteer opportunities...",
+    "noOpportunities": "No opportunities found",
+    "tryChangingFilters": "Try changing your filters.",
+    "viewDetails": "View Details",
+    "community": "Community",
+    "opportunity": "Volunteer Opportunity",
+    "clearFilters": "Clear filters",
+    "defaultDescription": "Volunteer and make a meaningful difference in your community."
   }
 }
