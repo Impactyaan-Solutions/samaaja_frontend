@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted} from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   MapPin,
@@ -17,6 +17,8 @@ const { t } = useI18n()
 const listings = ref([])
 const loading = ref(true)
 const error = ref(null)
+const loadMoreError = ref(null)
+const fetchingListings = ref(false)
 
 const PAGE_SIZE = 10
 const offset = ref(0)
@@ -31,25 +33,30 @@ const showLocationFilter = ref(false)
 const showCategoryFilter = ref(false)
 const showSkillFilter = ref(false)
 
+const getFilters = () => {
+  return {
+    locations: selectedLocation.value
+      ? [selectedLocation.value]
+      : [],
+    categories: selectedCategory.value
+      ? [selectedCategory.value]
+      : [],
+    skills: selectedSkill.value
+      ? [selectedSkill.value]
+      : []
+  }
+}
+
 const fetchListings = async () => {
+  if (fetchingListings.value || loadingMore.value) return
+
   try {
+    fetchingListings.value = true
     loading.value = true
     error.value = null
 
-    const filters = {
-      locations: selectedLocation.value
-        ? [selectedLocation.value]
-        : [],
-      categories: selectedCategory.value
-        ? [selectedCategory.value]
-        : [],
-      skills: selectedSkill.value
-        ? [selectedSkill.value]
-        : []
-    }
-
     const result = await getVolunteerListings(
-      filters,
+      getFilters(),
       PAGE_SIZE,
       offset.value
     )
@@ -59,6 +66,7 @@ const fetchListings = async () => {
   } catch (e) {
     error.value = e.message || t('volunteerListings.loadError')
   } finally {
+    fetchingListings.value = false
     loading.value = false
   }
 }
@@ -66,56 +74,65 @@ const fetchListings = async () => {
 const loadMoreListings = async () => {
   if (!hasMore.value || loadingMore.value) return
 
+  loadMoreError.value = null
+  loadingMore.value = true
+
   try {
-    loadingMore.value = true
-
-    offset.value += PAGE_SIZE
-
-    const filters = {
-      locations: selectedLocation.value
-        ? [selectedLocation.value]
-        : [],
-      categories: selectedCategory.value
-        ? [selectedCategory.value]
-        : [],
-      skills: selectedSkill.value
-        ? [selectedSkill.value]
-        : []
-    }
+    const nextOffset = offset.value + PAGE_SIZE
 
     const result = await getVolunteerListings(
-      filters,
+      getFilters(),
       PAGE_SIZE,
-      offset.value
+      nextOffset
     )
 
-    listings.value = [...listings.value, ...result.opportunities]
+    listings.value = [
+      ...listings.value,
+      ...result.opportunities
+    ]
+
+    offset.value = nextOffset
     hasMore.value = result.has_more
   } catch (e) {
-    error.value = e.message || t('volunteerListings.loadError')
+    console.error('Failed to load more volunteer opportunities:', e)
+    loadMoreError.value =
+     e.message || t('volunteerListings.loadMoreError')
   } finally {
     loadingMore.value = false
   }
 }
 
-onMounted(() => {
-  fetchListings()
-  window.addEventListener('scroll', handleScroll)
+const loadMoreSentinel = ref(null)
+let observer = null
+
+onMounted(async () => {
+  await fetchListings()
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      if (
+        entries[0].isIntersecting &&
+        hasMore.value &&
+        !loadingMore.value
+      ) {
+        loadMoreListings()
+      }
+    },
+    {
+      rootMargin: '200px'
+    }
+  )
+
+  if (loadMoreSentinel.value) {
+    observer.observe(loadMoreSentinel.value)
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
-
-const handleScroll = () => {
-  const nearBottom =
-    window.innerHeight + window.scrollY >=
-    document.documentElement.scrollHeight - 300
-
-  if (nearBottom && hasMore.value && !loading.value && !loadingMore.value) {
-    loadMoreListings()
+  if (observer) {
+    observer.disconnect()
   }
-}
+})
 
 const locations = computed(() => {
   const values = listings.value
@@ -562,6 +579,32 @@ const formatDescription = (description) => {
         </div>
 
       </div>
+      <!-- Infinite Scroll Trigger -->
+      <div
+        ref="loadMoreSentinel"
+        class="flex items-center justify-center py-8"
+      >
+        <!-- Loading more -->
+        <Loader2
+         v-if="loadingMore"
+         class="h-6 w-6 animate-spin text-primary-500"
+        />
+        <!-- Load more error -->
+        <p
+         v-else-if="loadMoreError"
+         class="text-xs text-red-500"
+        >
+         {{ loadMoreError }}
+        </p>
+
+        <!-- No more opportunities -->
+        <p
+          v-else-if="!hasMore"
+          class="text-sm text-gray-400"
+        >
+          {{ t('volunteerListings.noMoreOpportunities') }}
+        </p>
+     </div>
 
     </div>
 

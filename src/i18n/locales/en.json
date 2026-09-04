@@ -228,6 +228,8 @@
     "opportunity": "Volunteer Opportunity",
     "clearFilters": "Clear filters",
     "defaultDescription": "Volunteer and make a meaningful difference in your community.",
-    "loadError": "Failed to load volunteer opportunities."
+    "loadError": "Failed to load volunteer opportunities.",
+    "loadMoreError": "Failed to load more opportunities. Please try again.",
+    "noMoreOpportunities": "No more opportunities."
   }
 }
