@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   MapPin,
@@ -13,6 +14,7 @@ import AppHeader from '@/components/common/AppHeader.vue'
 import { getVolunteerListings } from '@/services/api'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const listings = ref([])
 const loading = ref(true)
@@ -47,60 +49,60 @@ const getFilters = () => {
   }
 }
 
-const fetchListings = async () => {
-  if (fetchingListings.value || loadingMore.value) return
+const performFetch = async ({ reset }) => {
+  if (reset) {
+    if (fetchingListings.value || loadingMore.value) return
+  } else {
+    if (!hasMore.value || loadingMore.value) return
+  }
 
-  try {
+  const targetOffset = reset ? 0 : offset.value + PAGE_SIZE
+
+  if (reset) {
     fetchingListings.value = true
     loading.value = true
     error.value = null
-
-    const result = await getVolunteerListings(
-      getFilters(),
-      PAGE_SIZE,
-      offset.value
-    )
-
-    listings.value = result.opportunities
-    hasMore.value = result.has_more
-  } catch (e) {
-    error.value = e.message || t('volunteerListings.loadError')
-  } finally {
-    fetchingListings.value = false
-    loading.value = false
+  } else {
+    loadingMore.value = true
+    loadMoreError.value = null
   }
-}
-
-const loadMoreListings = async () => {
-  if (!hasMore.value || loadingMore.value) return
-
-  loadMoreError.value = null
-  loadingMore.value = true
 
   try {
-    const nextOffset = offset.value + PAGE_SIZE
-
     const result = await getVolunteerListings(
       getFilters(),
       PAGE_SIZE,
-      nextOffset
+      targetOffset
     )
 
-    listings.value = [
-      ...listings.value,
-      ...result.opportunities
-    ]
+    listings.value = reset
+      ? result.opportunities
+      : [...listings.value, ...result.opportunities]
 
-    offset.value = nextOffset
+    offset.value = targetOffset
     hasMore.value = result.has_more
   } catch (e) {
-    console.error('Failed to load more volunteer opportunities:', e)
-    loadMoreError.value =
-     e.message || t('volunteerListings.loadMoreError')
+    const message = e.message || t(
+      reset ? 'volunteerListings.loadError' : 'volunteerListings.loadMoreError'
+    )
+
+    if (reset) {
+      error.value = message
+    } else {
+      console.error('Failed to load more volunteer opportunities:', e)
+      loadMoreError.value = message
+    }
   } finally {
-    loadingMore.value = false
+    if (reset) {
+      fetchingListings.value = false
+      loading.value = false
+    } else {
+      loadingMore.value = false
+    }
   }
 }
+
+const fetchListings = () => performFetch({ reset: true })
+const loadMoreListings = () => performFetch({ reset: false })
 
 const loadMoreSentinel = ref(null)
 let observer = null
@@ -130,9 +132,8 @@ const setupIntersectionObserver = () => {
   }
 }
 
-onMounted(async () => {
-  await fetchListings()
-  setupIntersectionObserver()
+onMounted(() => {
+  fetchListings()
 })
 
 watch(loadMoreSentinel, (newSentinel) => {
@@ -222,8 +223,6 @@ const getLocation = (item) => {
   return item.location || t('volunteerListings.location')
 }
 
-
-
 const hasFilters = computed(() => {
   return Boolean(
     selectedLocation.value ||
@@ -302,6 +301,12 @@ const clearFilters = async () => {
 /* -----------------------------
    Description
 ----------------------------- */
+
+const goToDetail = (item) => {
+  if (!item.name) return
+
+  router.push(`/volunteer-listings/${item.name}`)
+}
 
 const formatDescription = (description) => {
   if (!description) {
@@ -584,6 +589,7 @@ const formatDescription = (description) => {
 
           <!-- View Details -->
           <button
+            @click="goToDetail(item)"
             class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700"
           >
             {{ t('volunteerListings.viewDetails') }}
@@ -599,15 +605,16 @@ const formatDescription = (description) => {
       >
         <!-- Loading more -->
         <Loader2
-         v-if="loadingMore"
-         class="h-6 w-6 animate-spin text-primary-500"
+          v-if="loadingMore"
+          class="h-6 w-6 animate-spin text-primary-500"
         />
+
         <!-- Load more error -->
         <p
-         v-else-if="loadMoreError"
-         class="text-xs text-red-500"
+          v-else-if="loadMoreError"
+          class="text-xs text-red-500"
         >
-         {{ loadMoreError }}
+          {{ loadMoreError }}
         </p>
 
         <!-- No more opportunities -->
@@ -617,7 +624,7 @@ const formatDescription = (description) => {
         >
           {{ t('volunteerListings.noMoreOpportunities') }}
         </p>
-     </div>
+      </div>
 
     </div>
 
