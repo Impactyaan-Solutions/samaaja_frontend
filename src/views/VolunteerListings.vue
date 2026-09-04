@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted} from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   MapPin,
@@ -17,6 +17,11 @@ const { t } = useI18n()
 const listings = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+const PAGE_SIZE = 10
+const offset = ref(0)
+const hasMore = ref(true)
+const loadingMore = ref(false)
 
 const selectedLocation = ref('')
 const selectedCategory = ref('')
@@ -43,17 +48,74 @@ const fetchListings = async () => {
         : []
     }
 
-    listings.value = await getVolunteerListings(filters)
+    const result = await getVolunteerListings(
+      filters,
+      PAGE_SIZE,
+      offset.value
+    )
+
+    listings.value = result.opportunities
+    hasMore.value = result.has_more
   } catch (e) {
-    error.value = e.message || 'Failed to load volunteer opportunities.'
+    error.value = e.message || t('volunteerListings.loadError')
   } finally {
     loading.value = false
   }
 }
 
+const loadMoreListings = async () => {
+  if (!hasMore.value || loadingMore.value) return
+
+  try {
+    loadingMore.value = true
+
+    offset.value += PAGE_SIZE
+
+    const filters = {
+      locations: selectedLocation.value
+        ? [selectedLocation.value]
+        : [],
+      categories: selectedCategory.value
+        ? [selectedCategory.value]
+        : [],
+      skills: selectedSkill.value
+        ? [selectedSkill.value]
+        : []
+    }
+
+    const result = await getVolunteerListings(
+      filters,
+      PAGE_SIZE,
+      offset.value
+    )
+
+    listings.value = [...listings.value, ...result.opportunities]
+    hasMore.value = result.has_more
+  } catch (e) {
+    error.value = e.message || t('volunteerListings.loadError')
+  } finally {
+    loadingMore.value = false
+  }
+}
+
 onMounted(() => {
   fetchListings()
+  window.addEventListener('scroll', handleScroll)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
+const handleScroll = () => {
+  const nearBottom =
+    window.innerHeight + window.scrollY >=
+    document.documentElement.scrollHeight - 300
+
+  if (nearBottom && hasMore.value && !loading.value && !loadingMore.value) {
+    loadMoreListings()
+  }
+}
 
 const locations = computed(() => {
   const values = listings.value
@@ -120,10 +182,14 @@ const getLocation = (item) => {
    * Isliye Figma ke according placeholder rakha hai.
    */
   if (typeof item.location === 'object') {
-    return item.location?.city || item.location?.name || 'Location'
+    return (
+      item.location?.city ||
+      item.location?.name ||
+      t('volunteerListings.location')
+    )
   }
 
-  return item.location || 'Location'
+  return item.location || t('volunteerListings.location')
 }
 
 
@@ -165,6 +231,7 @@ const toggleSkillFilter = () => {
 const selectLocation = async (value) => {
   selectedLocation.value = value
   showLocationFilter.value = false
+  offset.value = 0
 
   await fetchListings()
 }
@@ -172,6 +239,7 @@ const selectLocation = async (value) => {
 const selectCategory = async (value) => {
   selectedCategory.value = value
   showCategoryFilter.value = false
+  offset.value = 0
 
   await fetchListings()
 }
@@ -179,6 +247,7 @@ const selectCategory = async (value) => {
 const selectSkill = async (value) => {
   selectedSkill.value = value
   showSkillFilter.value = false
+  offset.value = 0
 
   await fetchListings()
 }
@@ -195,6 +264,7 @@ const clearFilters = async () => {
   showLocationFilter.value = false
   showCategoryFilter.value = false
   showSkillFilter.value = false
+  offset.value = 0
 
   await fetchListings()
 }

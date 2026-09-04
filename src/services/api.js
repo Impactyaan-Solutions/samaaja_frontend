@@ -304,14 +304,29 @@ export const getVolunteerListings = async (
         )
 
         if (Array.isArray(result?.data?.opportunities)) {
-            return result.data.opportunities
+            return {
+                opportunities: result.data.opportunities,
+                has_more: result.data.has_more,
+                limit: result.data.limit,
+                offset: result.data.offset
+            }
         }
 
         if (Array.isArray(result?.message?.data?.opportunities)) {
-            return result.message.data.opportunities
+            return {
+                opportunities: result.message.data.opportunities,
+                has_more: result.message.data.has_more,
+                limit: result.message.data.limit,
+                offset: result.message.data.offset
+            }
         }
 
-        return []
+        return {
+            opportunities: [],
+            has_more: false,
+            limit,
+            offset
+        }
     } catch (error) {
         console.warn('Failed to fetch volunteer listings.', error)
         throw error

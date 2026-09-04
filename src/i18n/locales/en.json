@@ -227,6 +227,7 @@
     "community": "Community",
     "opportunity": "Volunteer Opportunity",
     "clearFilters": "Clear filters",
-    "defaultDescription": "Volunteer and make a meaningful difference in your community."
+    "defaultDescription": "Volunteer and make a meaningful difference in your community.",
+    "loadError": "Failed to load volunteer opportunities."
   }
 }
