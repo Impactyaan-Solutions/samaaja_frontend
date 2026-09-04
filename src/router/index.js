@@ -42,6 +42,38 @@ const router = createRouter({
       name: 'volunteer-listings',
       component: () => import('../views/VolunteerListings.vue')
     },
+    /*
+PSEUDO-CODE: VOLUNTEER OPPORTUNITY DETAIL ROUTE
+
+1. User is on the Volunteer Listings page.
+
+2. User clicks "View Details"
+   for a volunteer opportunity.
+
+3. Get the selected volunteer opportunity ID.
+
+4. Navigate to:
+   /volunteer-opportunities/:id
+
+5. Router loads:
+   VolunteerOpportunityDetail.vue
+
+6. VolunteerOpportunityDetail.vue reads
+   the opportunity ID from the route.
+
+7. The Detail page uses this ID
+   to call the Volunteer Opportunity Detail API.
+
+8. Display the returned opportunity details
+   on the Volunteer Opportunity Detail page.
+
+9. When the user clicks the Back button
+   on the Detail page:
+   - Navigate to the Community Pulse
+     landing page of the app.
+
+END
+*/
     {
       path: '/profile',
       name: 'profile',

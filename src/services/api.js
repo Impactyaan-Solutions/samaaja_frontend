@@ -333,6 +333,37 @@ export const getVolunteerListings = async (
     }
 }
 
+/*
+PSEUDO-CODE: GET VOLUNTEER OPPORTUNITY DETAIL API
+
+FUNCTION getVolunteerOpportunity(volunteerId)
+
+1. Receive the volunteer opportunity ID
+   from the Volunteer Opportunity Detail page.
+
+2. Create a GET request to:
+   /api/method/samaaja.api.volunteer.get
+
+3. Send the received volunteerId
+   as the "volunteer_id" query parameter.
+
+4. Call the backend API.
+
+5. If the API request is successful:
+   - Extract the opportunity details
+     from the response.
+   - Return the opportunity details
+     to the Volunteer Opportunity Detail page.
+
+6. If the API request fails:
+   - Log the error.
+   - Return/throw the error
+     so the Detail page can display
+     an appropriate error message.
+
+END FUNCTION
+*/
+
 export const createVolunteerInterest = async ({ user, volunteer_opportunity }) => {
     const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' }
     const url = `${baseurl}/api/resource/Volunteer%20Interest`
