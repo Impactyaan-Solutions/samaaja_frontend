@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   MapPin,
@@ -105,8 +105,10 @@ const loadMoreListings = async () => {
 const loadMoreSentinel = ref(null)
 let observer = null
 
-onMounted(async () => {
-  await fetchListings()
+const setupIntersectionObserver = () => {
+  if (observer) {
+    observer.disconnect()
+  }
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -125,6 +127,17 @@ onMounted(async () => {
 
   if (loadMoreSentinel.value) {
     observer.observe(loadMoreSentinel.value)
+  }
+}
+
+onMounted(async () => {
+  await fetchListings()
+  setupIntersectionObserver()
+})
+
+watch(loadMoreSentinel, (newSentinel) => {
+  if (newSentinel) {
+    setupIntersectionObserver()
   }
 })
 
