@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-const router = useRouter()
+
 import {
   MapPin,
   Tag,
@@ -592,7 +592,7 @@ const formatDescription = (description) => {
           <button
             @click="goToDetail(item)"
             class="shrink-0 rounded-md bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700"
-            @click="router.push(`/volunteer-listings/${item.name}`)"
+            
           >
             {{ t('volunteerListings.viewDetails') }}
           </button>
