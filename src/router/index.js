@@ -42,6 +42,11 @@ const router = createRouter({
       name: 'volunteer-listings',
       component: () => import('../views/VolunteerListings.vue')
     },
+    {
+      path: '/volunteer-listings/:id',
+      name: 'volunteer-opportunity-detail',
+      component: () => import('../views/VolunteerOpportunityDetail.vue')
+},
     /*
 PSEUDO-CODE: VOLUNTEER OPPORTUNITY DETAIL ROUTE
 

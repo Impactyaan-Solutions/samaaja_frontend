@@ -333,36 +333,38 @@ export const getVolunteerListings = async (
     }
 }
 
-/*
-PSEUDO-CODE: GET VOLUNTEER OPPORTUNITY DETAIL API
+export const getVolunteerOpportunity = async (volunteerId) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
 
-FUNCTION getVolunteerOpportunity(volunteerId)
+        const params = new URLSearchParams({
+            volunteer_id: volunteerId
+        })
 
-1. Receive the volunteer opportunity ID
-   from the Volunteer Opportunity Detail page.
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.get?${params.toString()}`,
+            'GET',
+            null
+        )
 
-2. Create a GET request to:
-   /api/method/samaaja.api.volunteer.get
+        if (result?.data?.opportunity) {
+            return result.data.opportunity
+        }
 
-3. Send the received volunteerId
-   as the "volunteer_id" query parameter.
+        if (result?.message?.data?.opportunity) {
+            return result.message.data.opportunity
+        }
 
-4. Call the backend API.
-
-5. If the API request is successful:
-   - Extract the opportunity details
-     from the response.
-   - Return the opportunity details
-     to the Volunteer Opportunity Detail page.
-
-6. If the API request fails:
-   - Log the error.
-   - Return/throw the error
-     so the Detail page can display
-     an appropriate error message.
-
-END FUNCTION
-*/
+        return result?.data || result?.message || null
+    } catch (error) {
+        console.error('Failed to fetch volunteer opportunity:', error)
+        throw error
+    }
+}
 
 export const createVolunteerInterest = async ({ user, volunteer_opportunity }) => {
     const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' }
