@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ArrowLeft, Share2 } from 'lucide-vue-next'
 
 import AppHeader from '@/components/common/AppHeader.vue'
@@ -8,7 +9,7 @@ import { getVolunteerOpportunity } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
-
+const { t } = useI18n()
 const opportunity = ref(null)
 const loading = ref(true)
 const error = ref(null)
@@ -22,7 +23,7 @@ const fetchOpportunity = async () => {
 
     opportunity.value = result
   } catch (e) {
-    error.value = e.message || 'Failed to load volunteer opportunity.'
+    error.value = e.message || t('volunteerOpportunityDetail.loadError')
   } finally {
     loading.value = false
   }
@@ -30,6 +31,17 @@ const fetchOpportunity = async () => {
 
 const goBack = () => {
   router.push('/volunteer-listings')
+}
+
+const shareOpportunity = async () => {
+  const url = window.location.href
+
+  try {
+    await navigator.clipboard.writeText(url)
+    alert(t('volunteerOpportunityDetail.linkCopied'))
+  } catch (e) {
+    console.error('Failed to copy link:', e)
+  }
 }
 
 onMounted(() => {
@@ -47,7 +59,7 @@ onMounted(() => {
         v-if="loading"
         class="flex min-h-[60vh] items-center justify-center"
       >
-        Loading...
+        {{ t('volunteerOpportunityDetail.loading') }}
       </div>
 
       <!-- Error -->
@@ -68,16 +80,17 @@ onMounted(() => {
             @click="goBack"
           >
             <ArrowLeft class="h-5 w-5" />
-            Back
+            {{ t('volunteerOpportunityDetail.back') }}
           </button>
 
           <h1 class="justify-self-center whitespace-nowrap text-base font-semibold text-gray-900">
-            Volunteer Opportunity
+            {{ t('volunteerOpportunityDetail.headerTitle') }}
           </h1>
 
           <button
             type="button"
             class="justify-self-end rounded-full p-2"
+            @click="shareOpportunity"
           >
             <Share2 class="h-5 w-5" />
           </button>
@@ -103,7 +116,7 @@ onMounted(() => {
         <!-- About this Opportunity -->
         <div class="mt-5 rounded-2xl bg-white p-5 shadow-sm">
           <h2 class="text-sm font-semibold text-gray-900">
-            ABOUT THIS OPPORTUNITY
+            {{ t('volunteerOpportunityDetail.aboutOpportunity') }}
           </h2>
 
           <p class="mt-3 text-sm leading-6 text-gray-600">
@@ -113,39 +126,49 @@ onMounted(() => {
         <!-- What is Expected -->
         <div class="mt-5 rounded-2xl bg-white p-5 shadow-sm">
           <h2 class="text-sm font-semibold text-gray-900">
-           WHAT IS EXPECTED
+           {{ t('volunteerOpportunityDetail.whatIsExpected') }}
           </h2>
           <div class="mt-4 space-y-3 text-sm">
             <div class="flex">
-              <span class="w-28 text-gray-500">Time</span>
+              <span class="w-28 text-gray-500">
+                {{ t('volunteerOpportunityDetail.time') }}
+              </span>
               <span class="text-gray-900">
                 {{ opportunity.expected_time_commitment }}
               </span>
             </div>
 
             <div class="flex">
-             <span class="w-28 text-gray-500">Start</span>
+             <span class="w-28 text-gray-500">
+               {{ t('volunteerOpportunityDetail.start') }}
+             </span>
              <span class="text-gray-900">
                {{ opportunity.start_date }}
              </span>
             </div>
 
             <div class="flex">
-             <span class="w-28 text-gray-500">End</span>
+             <span class="w-28 text-gray-500">
+               {{ t('volunteerOpportunityDetail.end') }}
+             </span>
              <span class="text-gray-900">
                {{ opportunity.end_date }}
              </span>
             </div>
 
             <div class="flex">
-             <span class="w-28 text-gray-500">Format</span>
+             <span class="w-28 text-gray-500">
+               {{ t('volunteerOpportunityDetail.format') }}
+             </span>
              <span class="text-gray-900">
                {{ opportunity.volunteer_format }}
              </span>
             </div>
 
             <div class="flex">
-             <span class="w-28 text-gray-500">Compensation</span>
+             <span class="w-28 text-gray-500">
+               {{ t('volunteerOpportunityDetail.compensation') }}
+             </span>
              <span class="text-gray-900">
                {{ opportunity.compensation_type }}
              </span>
@@ -155,7 +178,7 @@ onMounted(() => {
         <!-- Skills Needed -->
          <div class="mt-5 rounded-2xl bg-white p-5 shadow-sm">
            <h2 class="text-sm font-semibold text-gray-900">
-             SKILLS NEEDED
+             {{ t('volunteerOpportunityDetail.skillsNeeded') }}
            </h2>
 
          <div class="mt-4 flex flex-wrap gap-2">
@@ -172,12 +195,11 @@ onMounted(() => {
          <!-- What happens after I apply -->
           <div class="mt-5 rounded-2xl bg-white p-5 shadow-sm">
             <h2 class="text-sm font-semibold text-gray-900">
-              WHAT HAPPENS AFTER I APPLY
+              {{ t('volunteerOpportunityDetail.whatHappensAfterApply') }}
             </h2>
 
             <p class="mt-3 text-sm leading-6 text-gray-600">
-              Your application will be reviewed by our team. Once reviewed,
-              you will be contacted on the details provided in your application.
+              {{ t('volunteerOpportunityDetail.afterApplyDescription') }}
             </p>
          </div>
 
@@ -186,7 +208,7 @@ onMounted(() => {
            type="button"
            class="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-primary-700"
          >
-           Apply Now
+           {{ t('volunteerOpportunityDetail.applyNow') }}
          </button>
 
       </div>

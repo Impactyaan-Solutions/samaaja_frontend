@@ -231,5 +231,23 @@
     "loadError": "Failed to load volunteer opportunities.",
     "loadMoreError": "Failed to load more opportunities. Please try again.",
     "noMoreOpportunities": "No more opportunities."
+  },
+  "volunteerOpportunityDetail": {
+    "back": "Back",
+    "headerTitle": "Volunteer Opportunity",
+    "aboutOpportunity": "ABOUT THIS OPPORTUNITY",
+    "whatIsExpected": "WHAT IS EXPECTED",
+    "skillsNeeded": "SKILLS NEEDED",
+    "whatHappensAfterApply": "WHAT HAPPENS AFTER I APPLY",
+    "time": "Time",
+    "start": "Start",
+    "end": "End",
+    "format": "Format",
+    "compensation": "Compensation",
+    "afterApplyDescription": "Your application will be reviewed by our team. Once reviewed, you will be contacted on the details provided in your application.",
+    "applyNow": "Apply Now",
+    "loading": "Loading...",
+    "loadError": "Failed to load volunteer opportunity.",
+    "linkCopied": "Link copied!"
   }
 }

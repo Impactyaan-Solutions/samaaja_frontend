@@ -229,5 +229,23 @@
     "loadError": "स्वयंसेवी अवसर लोड नहीं हो पाए।",
     "loadMoreError": "और अवसर लोड नहीं हो पाए। कृपया फिर से प्रयास करें।",
     "noMoreOpportunities": "और कोई अवसर उपलब्ध नहीं है।"
+  },
+    "volunteerOpportunityDetail": {
+    "back": "वापस",
+    "headerTitle": "स्वयंसेवी अवसर",
+    "aboutOpportunity": "इस अवसर के बारे में",
+    "whatIsExpected": "क्या अपेक्षित है",
+    "skillsNeeded": "आवश्यक कौशल",
+    "whatHappensAfterApply": "आवेदन करने के बाद क्या होगा",
+    "time": "समय",
+    "start": "शुरुआत",
+    "end": "समाप्ति",
+    "format": "प्रारूप",
+    "compensation": "मानदेय",
+    "afterApplyDescription": "आपके आवेदन की हमारी टीम द्वारा समीक्षा की जाएगी। समीक्षा के बाद, आपके आवेदन में दिए गए विवरण पर आपसे संपर्क किया जाएगा।",
+    "applyNow": "अभी आवेदन करें",
+    "loading": "लोड हो रहा है...",
+    "loadError": "स्वयंसेवी अवसर लोड नहीं हो पाया।",
+    "linkCopied": "लिंक कॉपी हो गया!"
   }
 }
