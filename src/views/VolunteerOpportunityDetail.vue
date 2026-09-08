@@ -4,15 +4,24 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft, Share2 } from 'lucide-vue-next'
 
-import AppHeader from '@/components/common/AppHeader.vue'
 import { getVolunteerOpportunity } from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const opportunity = ref(null)
 const loading = ref(true)
 const error = ref(null)
+const shareError = ref(null)
+
+const formatDate = (timeStr) => {
+  if (!timeStr) return ""
+  const date = new Date(timeStr)
+  return date.toLocaleDateString(
+    locale.value === 'hi' ? 'hi-IN' : 'en-US',
+    { day: "2-digit", month: "short", year: "numeric" }
+  )
+}
 
 const fetchOpportunity = async () => {
   try {
@@ -29,9 +38,6 @@ const fetchOpportunity = async () => {
   }
 }
 
-const goBack = () => {
-  router.push('/volunteer-listings')
-}
 
 const shareOpportunity = async () => {
   const url = window.location.href
@@ -41,7 +47,15 @@ const shareOpportunity = async () => {
     alert(t('volunteerOpportunityDetail.linkCopied'))
   } catch (e) {
     console.error('Failed to copy link:', e)
+    shareError.value = t('volunteerOpportunityDetail.shareError')
   }
+}
+
+const applyForOpportunity = () => {
+  router.push({
+    name: 'volunteer-application',
+    params: { id: route.params.id }
+  })
 }
 
 onMounted(() => {
@@ -50,9 +64,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <AppHeader />
-
+  <div class="min-h-full bg-gray-50">
     <main class="mx-auto max-w-4xl px-4 pb-28 pt-6">
       <!-- Loading -->
       <div
@@ -72,29 +84,38 @@ onMounted(() => {
 
       <!-- Opportunity -->
       <div v-else-if="opportunity">
-        <!-- Header -->
-        <div class="mb-6 grid grid-cols-3 items-center">
-          <button
-            type="button"
-            class="justify-self-start flex items-center gap-2 text-sm font-medium"
-            @click="goBack"
-          >
-            <ArrowLeft class="h-5 w-5" />
-            {{ t('volunteerOpportunityDetail.back') }}
-          </button>
+      <!-- Header -->
+      <header
+        class="sticky top-0 z-20 flex items-center border-b border-gray-50 bg-white px-5 py-5"
+      >
+        <button
+          type="button"
+          @click="router.back()"
+          class="-ml-2 rounded-full p-2 transition-colors hover:bg-gray-100"
+        >
+          <ArrowLeft class="h-6 w-6 text-gray-800" />
+        </button>
 
-          <h1 class="justify-self-center whitespace-nowrap text-base font-semibold text-gray-900">
-            {{ t('volunteerOpportunityDetail.headerTitle') }}
-          </h1>
+        <h2 class="mx-auto -ml-2 text-lg font-bold text-gray-900">
+          {{ t('volunteerOpportunityDetail.headerTitle') }}
+        </h2>
 
-          <button
-            type="button"
-            class="justify-self-end rounded-full p-2"
-            @click="shareOpportunity"
-          >
-            <Share2 class="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          class="rounded-full p-2 transition-colors hover:bg-gray-100"
+          :aria-label="t('volunteerOpportunityDetail.share')"
+          @click="shareOpportunity"
+        >
+          <Share2 class="h-5 w-5 text-gray-800" />
+        </button>
+      </header>
+
+      <div
+        v-if="shareError"
+        class="mb-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600"
+      >
+        {{ shareError }}
+      </div>
 
         <!-- Opportunity Title Card -->
         <div class="rounded-2xl bg-white p-5 shadow-sm">
@@ -102,14 +123,14 @@ onMounted(() => {
             <span
               class="inline-flex rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600"
             >
-              {{ opportunity.category }}
+              {{ opportunity.category || t('volunteerListings.community') }}
             </span>
           </div>
           <h1 class="text-xl font-bold text-gray-900">
-            {{ opportunity.title }}
+            {{ opportunity.title || t('volunteerListings.opportunity') }}
           </h1>
           <div class="mt-3 flex items-center gap-2 text-sm text-gray-500">
-            <span>{{ opportunity.location }}</span>
+            <span>{{ opportunity.location || t('volunteerListings.location') }}</span>
           </div>
         </div>
 
@@ -120,7 +141,7 @@ onMounted(() => {
           </h2>
 
           <p class="mt-3 text-sm leading-6 text-gray-600">
-            {{ opportunity.description }}
+            {{ opportunity.description || t('volunteerListings.opportunity') }}
           </p>
         </div>
         <!-- What is Expected -->
@@ -143,7 +164,7 @@ onMounted(() => {
                {{ t('volunteerOpportunityDetail.start') }}
              </span>
              <span class="text-gray-900">
-               {{ opportunity.start_date }}
+               {{ formatDate(opportunity.start_date) }}
              </span>
             </div>
 
@@ -152,7 +173,7 @@ onMounted(() => {
                {{ t('volunteerOpportunityDetail.end') }}
              </span>
              <span class="text-gray-900">
-               {{ opportunity.end_date }}
+               {{ formatDate(opportunity.end_date) }}
              </span>
             </div>
 
@@ -219,7 +240,8 @@ onMounted(() => {
          <!-- Apply Now -->
          <button
            type="button"
-           class="fixed bottom-24 left-1/2 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-primary-700"
+           @click="applyForOpportunity"
+           class="fixed bottom-32 left-1/2 z-30 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-primary-700"
          >
            {{ t('volunteerOpportunityDetail.applyNow') }}
          </button>
@@ -228,116 +250,3 @@ onMounted(() => {
     </main>
   </div>
 </template>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!--
-PSEUDO-CODE: VOLUNTEER OPPORTUNITY DETAIL VIEW PAGE
-
-START
-
-1. Open this page when the user clicks "View Details"
-   from the Volunteer Listings page.
-
-2. Receive the selected volunteer opportunity ID
-   from the route.
-
-3. Show a loading state while fetching the opportunity details.
-
-4. Call the Volunteer Opportunity Detail API
-   using the opportunity ID.
-
-5. If the API request is successful:
-   - Store the returned opportunity details.
-   - Stop the loading state.
-
-6. Display the page header:
-   - Static title: "Volunteer Opportunity"
-   - Back button.
-   - Share button.
-
-7. Back Button:
-   - When clicked, navigate to the Community Pulse
-     landing page of the app.
-
-8. Share Button:
-   - Create the link for the current opportunity page.
-   - Copy the link to the clipboard.
-   - Show a success message if the link is copied.
-   - Show an error message if copying fails.
-
-9. Display the Opportunity Title Card:
-   - Category Type tag.
-   - Opportunity title.
-   - Location.
-
-10. Display "About this Opportunity":
-    - Show the opportunity description.
-    - Display a few lines initially.
-    - Allow the description section to scroll
-      when the content is longer.
-
-11. Display "What is Expected":
-    - Expected time commitment.
-    - Start date.
-    - End date.
-    - Volunteer format:
-      Remote / On-ground / Hybrid.
-    - Compensation:
-      Pro Bono / Paid.
-
-12. Display "Skills Needed":
-    - Display all required skills as tags.
-
-13. Display "What happens after I apply":
-    - Show static information explaining that
-      the application will be reviewed and the user
-      will be contacted on the provided details.
-
-14. Display a fixed "Apply Now" button:
-    - Keep the button fixed at the bottom.
-    - Keep it above the bottom navigation.
-
-15. Apply Now:
-    - When user clicks "Apply Now":
-      - Get the current volunteer opportunity ID.
-      - Navigate to:
-        /volunteer-listings/:id/apply
-      - Do not call the check_application API here.
-        The ApplicationForm page will handle that check.
-
-16. If fetching opportunity details fails:
-    - Stop the loading state.
-    - Display an error message.
-
-END
--->

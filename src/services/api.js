@@ -359,7 +359,7 @@ export const getVolunteerOpportunity = async (volunteerId) => {
             return result.message.data.opportunity
         }
 
-        return result?.data || result?.message || null
+        throw new Error('Volunteer opportunity data not found')
     } catch (error) {
         console.error('Failed to fetch volunteer opportunity:', error)
         throw error
