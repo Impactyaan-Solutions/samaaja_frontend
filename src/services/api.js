@@ -366,6 +366,40 @@ export const getVolunteerOpportunity = async (volunteerId) => {
     }
 }
 
+/*
+PSEUDO-CODE: VOLUNTEER APPLICATION APIs
+
+1. checkVolunteerApplication(volunteerId)
+
+   - Call:
+     GET /api/method/samaaja.api.volunteer.check_application
+
+   - Send:
+     volunteer_opportunity = volunteerId
+
+   - Return:
+     API response containing already_applied
+
+
+2. applyForVolunteerOpportunity(applicationData)
+
+   - Call:
+     POST /api/method/samaaja.api.volunteer.apply
+
+   - Send:
+     volunteer_opportunity
+     age
+     preferred_available_days
+     why_do_you_want_to_volunteer
+     privacy_consent
+
+   - Do NOT send user.
+   - Backend gets the current user from the session.
+
+   - Return:
+     API success response or API error response.
+*/
+
 export const createVolunteerInterest = async ({ user, volunteer_opportunity }) => {
     const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' }
     const url = `${baseurl}/api/resource/Volunteer%20Interest`

@@ -203,6 +203,19 @@ onMounted(() => {
             </p>
          </div>
 
+         <!--
+         PSEUDO-CODE: APPLY NOW
+
+         When user clicks "Apply Now":
+
+         1. Get the current volunteer opportunity ID from the route.
+
+         2. Navigate to: /volunteer-listings/:id/apply
+
+         3. Do not call the check_application API here.
+            The ApplicationForm page will handle the duplicate application check.
+         -->
+
          <!-- Apply Now -->
          <button
            type="button"
@@ -315,10 +328,12 @@ START
     - Keep it above the bottom navigation.
 
 15. Apply Now:
-    - When the user clicks "Apply Now",
-      start the volunteer application flow.
-    - Application form and submission workflow
-      will be implemented in a later scope.
+    - When user clicks "Apply Now":
+      - Get the current volunteer opportunity ID.
+      - Navigate to:
+        /volunteer-listings/:id/apply
+      - Do not call the check_application API here.
+        The ApplicationForm page will handle that check.
 
 16. If fetching opportunity details fails:
     - Stop the loading state.

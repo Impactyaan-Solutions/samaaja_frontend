@@ -46,7 +46,31 @@ const router = createRouter({
       path: '/volunteer-listings/:id',
       name: 'volunteer-opportunity-detail',
       component: () => import('../views/VolunteerOpportunityDetail.vue')
-},
+    },
+    {
+      path: '/volunteer-listings/:id/apply',
+      name: 'volunteer-application',
+      component: () => import('../views/ApplicationForm.vue')
+    },
+
+/*
+PSEUDO-CODE: VOLUNTEER APPLICATION ROUTE
+
+When user navigates to:
+
+/volunteer-listings/:id/apply
+
+1. Read the opportunity ID from :id.
+2. Load ApplicationForm.vue.
+3. ApplicationForm.vue handles:
+   - duplicate application check
+   - displaying Form.vue
+   - application submission flow
+*/
+{
+  // ACTUAL ROUTE WILL BE ADDED AFTER APPROVAL
+}
+
     /*
 PSEUDO-CODE: VOLUNTEER OPPORTUNITY DETAIL ROUTE
 
