@@ -90,15 +90,18 @@ const performFetch = async ({ reset }) => {
     hasMore.value = result.has_more
   } catch (e) {
     const message = e.message || t(
-      reset ? 'volunteerListings.loadError' : 'volunteerListings.loadMoreError'
+      reset 
+        ? 'volunteerListings.loadError' : 
+        'volunteerListings.loadMoreError'
     )
 
     if (reset) {
       error.value = message
     } else {
-      console.error('Failed to load more volunteer opportunities:', e)
       loadMoreError.value = message
     }
+    
+    console.error('Failed to load more volunteer opportunities:', e)
   } finally {
     if (reset) {
       fetchingListings.value = false

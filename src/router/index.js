@@ -50,7 +50,7 @@ const router = createRouter({
     {
       path: '/volunteer-listings/:id/apply',
       name: 'volunteer-application',
-      component: () => import('../views/ApplicationForm.vue')
+      component: () => import('../views/VolunteerApplicationForm.vue')
     },
     {
       path: '/profile',

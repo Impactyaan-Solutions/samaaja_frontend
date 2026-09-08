@@ -224,19 +224,6 @@ onMounted(() => {
             </p>
          </div>
 
-         <!--
-         PSEUDO-CODE: APPLY NOW
-
-         When user clicks "Apply Now":
-
-         1. Get the current volunteer opportunity ID from the route.
-
-         2. Navigate to: /volunteer-listings/:id/apply
-
-         3. Do not call the check_application API here.
-            The ApplicationForm page will handle the duplicate application check.
-         -->
-
          <!-- Apply Now -->
          <button
            type="button"
