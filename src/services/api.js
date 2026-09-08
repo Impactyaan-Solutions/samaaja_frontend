@@ -366,6 +366,31 @@ export const getVolunteerOpportunity = async (volunteerId) => {
     }
 }
 
+export const getMetadataOptions = async (doctype) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            doctype
+        })
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.metadata.get_list?${params.toString()}`,
+            'GET',
+            null
+        )
+
+        return result?.data || result?.message?.data || []
+    } catch (error) {
+        console.error(`Failed to fetch metadata options for ${doctype}:`, error)
+        throw error
+    }
+}
+
 /*
 PSEUDO-CODE: VOLUNTEER APPLICATION APIs
 

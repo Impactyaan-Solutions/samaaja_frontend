@@ -12,7 +12,10 @@ import {
 } from 'lucide-vue-next'
 
 import AppHeader from '@/components/common/AppHeader.vue'
-import { getVolunteerListings } from '@/services/api'
+import {
+  getVolunteerListings,
+  getMetadataOptions
+} from '@/services/api'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -31,6 +34,10 @@ const loadingMore = ref(false)
 const selectedLocation = ref('')
 const selectedCategory = ref('')
 const selectedSkill = ref('')
+
+const locations = ref([])
+const categories = ref([])
+const skills = ref([])
 
 const showLocationFilter = ref(false)
 const showCategoryFilter = ref(false)
@@ -133,7 +140,24 @@ const setupIntersectionObserver = () => {
   }
 }
 
+const fetchMetadataOptions = async () => {
+  try {
+    const [locationOptions, categoryOptions, skillOptions] = await Promise.all([
+      getMetadataOptions('Location'),
+      getMetadataOptions('Category'),
+      getMetadataOptions('Skill')
+    ])
+
+    locations.value = locationOptions
+    categories.value = categoryOptions
+    skills.value = skillOptions
+  } catch (e) {
+    console.error('Failed to load volunteer filter options:', e)
+  }
+}
+
 onMounted(() => {
+  fetchMetadataOptions()
   fetchListings()
 })
 
@@ -149,64 +173,6 @@ onUnmounted(() => {
   }
 })
 
-const locations = computed(() => {
-  const values = listings.value
-    .map((item) => {
-      if (typeof item.location === 'object') {
-        return item.location?.city || item.location?.name
-      }
-
-      return item.location
-    })
-    .filter(Boolean)
-
-  return [...new Set(values)]
-})
-
-const categories = computed(() => {
-  return [
-    ...new Set(
-      listings.value
-        .map((item) => item.category)
-        .filter(Boolean)
-    )
-  ]
-})
-
-const extractSkills = (item) => {
-  const skills = item.skills_needed || item.skills || []
-
-  if (Array.isArray(skills)) {
-    return skills
-      .map((skill) => {
-        if (typeof skill === 'string') {
-          return skill
-        }
-
-        return (
-          skill?.skill ||
-          skill?.skill_name ||
-          skill?.name ||
-          skill?.skills
-        )
-      })
-      .filter(Boolean)
-  }
-
-  if (typeof skills === 'string') {
-    return skills
-      .split(',')
-      .map((skill) => skill.trim())
-      .filter(Boolean)
-  }
-
-  return []
-}
-
-const skills = computed(() => {
-  const allSkills = listings.value.flatMap(extractSkills)
-  return [...new Set(allSkills)]
-})
 
 const getLocation = (item) => {
   /*
