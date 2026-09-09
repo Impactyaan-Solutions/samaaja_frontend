@@ -91,6 +91,24 @@ onMounted(async () => {
           {{ t('volunteerApplication.alreadyApplied') }}
         </p>
       </section>
+
+      <div class="space-y-4">
+        <button
+          type="button"
+          @click="router.push('/volunteer-listings')"
+          class="w-full rounded-lg bg-primary-600 px-6 py-4 text-base font-semibold text-white"
+        >
+          {{ t('volunteerApplication.browseMoreOpportunities') }}
+        </button>
+
+        <button
+          type="button"
+          @click="router.push('/')"
+          class="w-full rounded-lg border border-primary-600 bg-white px-6 py-4 text-base font-semibold text-primary-600"
+        >
+          {{ t('volunteerApplication.returnToHome') }}
+        </button>
+      </div>
     </div>
     <div v-else-if="success">
       <h1 class="text-lg font-normal text-gray-900">
