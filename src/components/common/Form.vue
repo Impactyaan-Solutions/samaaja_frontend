@@ -1,4 +1,53 @@
 <script setup>
+import { ref } from 'vue'
+
+const isListening = ref(false)
+const recognition = ref(null)
+const voiceInputRefs = {}
+
+const startVoiceInput = (field) => {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    field.voiceInputError = field.voiceInput.notSupportedMessage
+    return
+  }
+
+  recognition.value = new SpeechRecognition()
+  recognition.value.lang = 'en-IN'
+  recognition.value.interimResults = false
+  recognition.value.continuous = false
+
+  recognition.value.onstart = () => {
+    isListening.value = true
+  }
+
+  recognition.value.onresult = (event) => {
+    const transcript = event.results[0][0].transcript
+    const textarea = voiceInputRefs[field.key]
+
+    if (textarea) {
+      textarea.value = transcript
+    }
+  }
+
+  recognition.value.onerror = () => {
+    field.voiceInputError = field.voiceInput.errorMessage
+  }
+
+  recognition.value.onend = () => {
+    isListening.value = false
+  }
+
+  recognition.value.start()
+}
+
+const setVoiceInputRef = (key) => (element) => {
+  if (element) {
+    voiceInputRefs[key] = element
+  }
+}
 const props = defineProps({
   fields: {
     type: Array,
@@ -11,6 +60,10 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  error: {
+    type: String,
+    default: null
   }
 })
 
@@ -62,7 +115,13 @@ const submitForm = (event) => {
           :placeholder="field.placeholder"
           :value="field.value ?? ''"
           :readonly="field.editable === false"
-          class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
+          :required="field.required"
+          :class="[
+            'w-full rounded-md border border-gray-300 px-3 py-2 text-sm',
+            field.editable === false
+              ? 'bg-gray-100 text-gray-500'
+              : 'text-gray-700'
+          ]"
         />
       </div>
 
@@ -89,6 +148,7 @@ const submitForm = (event) => {
               :name="field.key"
               type="radio"
               :value="option.value"
+              :required="field.required"
             />
 
             {{ option.label }}
@@ -145,12 +205,34 @@ const submitForm = (event) => {
         </label>
 
         <textarea
+          :ref="field.voiceInput?.enabled
+            ? setVoiceInputRef(field.key)
+            : undefined"
           :name="field.key"
           rows="4"
           :placeholder="field.placeholder"
           :readonly="field.editable === false"
+          :required="field.required"
           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700"
         ></textarea>
+        <button
+          v-if="field.voiceInput?.enabled"
+          type="button"
+          @click="startVoiceInput(field)"
+          class="mt-2 w-full rounded-md border border-primary-600 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700"
+        >
+          {{ isListening
+            ? field.voiceInput.listeningLabel
+            : field.voiceInput.label
+          }}
+        </button>
+
+        <p
+          v-if="field.voiceInputError"
+          class="mt-2 text-sm text-red-600"
+        >
+          {{ field.voiceInputError }}
+        </p>
       </div>
 
       <!-- Consent -->
@@ -159,6 +241,7 @@ const submitForm = (event) => {
           <input
             :name="field.key"
             type="checkbox"
+            :required="field.required"
             class="mt-1"
           />
 
@@ -176,6 +259,12 @@ const submitForm = (event) => {
     >
       {{ submitLabel }}
     </button>
+    <p
+      v-if="error"
+      class="text-sm text-red-600"
+    >
+      {{ error }}
+    </p>
 
   </form>
 </template>

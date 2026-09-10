@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
@@ -45,31 +45,19 @@ const fields = ref([
     editable: false
   },
   {
+    key: 'gender',
+    label: t('volunteerApplication.gender'),
+    type: 'text',
+    value: authState.profile.gender,
+    editable: false,
+    required: true
+  },
+  {
     key: 'age',
     label: t('volunteerApplication.age'),
     type: 'number',
     editable: true,
     required: true
-  },
-  {
-    key: 'gender',
-    label: t('volunteerApplication.gender'),
-    type: 'radio',
-    required: true,
-    options: [
-      {
-        value: 'Male',
-        label: t('volunteerApplication.genderMale')
-      },
-      {
-        value: 'Female',
-        label: t('volunteerApplication.genderFemale')
-      },
-      {
-        value: 'Prefer not to say',
-        label: t('volunteerApplication.genderPreferNotToSay')
-      }
-    ]
   },
   {
     key: 'preferredAvailableDays',
@@ -100,7 +88,14 @@ const fields = ref([
     label: t('volunteerApplication.whyVolunteer'),
     type: 'textarea',
     required: true,
-    placeholder: t('volunteerApplication.whyVolunteerPlaceholder')
+    placeholder: t('volunteerApplication.whyVolunteerPlaceholder'),
+    voiceInput: {
+      enabled: true,
+      label: t('volunteerApplication.addVoiceInput'),
+      listeningLabel: t('volunteerApplication.listening'),
+      notSupportedMessage: t('volunteerApplication.voiceInputNotSupported'),
+      errorMessage: t('volunteerApplication.voiceInputError')
+    }
   },
   {
     key: 'privacyConsent',
@@ -120,6 +115,7 @@ const handleFormSubmit = async (formData) => {
     const result = await applyForVolunteerOpportunity({
       volunteer_opportunity: volunteerOpportunityId,
       age: formData.age,
+      gender: formData.gender,
       preferred_available_days: formData.preferredAvailableDays,
       why_do_you_want_to_volunteer: formData.whyDoYouWantToVolunteer,
       privacy_consent: formData.privacyConsent
@@ -127,6 +123,11 @@ const handleFormSubmit = async (formData) => {
 
     success.value =
       result.message || t('volunteerApplication.applicationSubmittedSuccess')
+    await nextTick()
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
   } catch (e) {
     formError.value =
       e.message || t('volunteerApplication.submitError')
@@ -169,6 +170,7 @@ onMounted(async () => {
       >
        <button
         type="button"
+        :aria-label="t('volunteerApplication.goBack')"
         @click="router.back()"
         class="-ml-2 rounded-full p-2 transition-colors hover:bg-gray-100"
       >
@@ -327,17 +329,13 @@ onMounted(async () => {
     <div
       v-if="!loading && !error && !alreadyApplied && !success"
     >
-      <p
-        v-if="formError"
-        class="text-sm text-red-600"
-      >
-        {{ formError }}
-      </p>
+    
   
       <Form
         :fields="fields"
         :submit-label="t('volunteerApplication.submit')"
         :loading="formLoading"
+        :error="formError"
         @submit="handleFormSubmit"
       />
     </div>
