@@ -294,6 +294,7 @@
     "preferredDaysRequired": "Please select your preferred available days",
     "privacyConsentRequired": "Please accept the privacy consent",
     "submitError": "Failed to submit application",
-    "privacyConsentText": "By submitting this application, I authorize the NGO to contact me via phone or email for further information and updates regarding this volunteer opportunity."
+    "privacyConsentText": "By submitting this application, I authorize the NGO to contact me via phone or email for further information and updates regarding this volunteer opportunity.",
+    "goBack": "Go back"
   }
 }

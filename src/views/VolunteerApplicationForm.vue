@@ -2,13 +2,14 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Loader2 } from 'lucide-vue-next'
+import { ArrowLeft, Loader2 } from 'lucide-vue-next'
 import { authState } from '@/auth'
 import {
   checkVolunteerApplication,
-  getVolunteerOpportunity
+  getVolunteerOpportunity,
+  applyForVolunteerOpportunity
 } from '@/services/api'
-import Form from '@/components/common/form.vue'
+import Form from '@/components/common/Form.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,8 +22,125 @@ const loading = ref(true)
 const alreadyApplied = ref(false)
 const error = ref(null)
 const success = ref(null)
-const handleFormResult = (result) => {
-  success.value = result.message || t('volunteerApplication.applicationSubmittedSuccess')
+const fields = ref([
+  {
+    key: 'fullName',
+    label: t('volunteerApplication.fullName'),
+    type: 'text',
+    value: authState.profile.fullName,
+    editable: false
+  },
+  {
+    key: 'email',
+    label: t('volunteerApplication.email'),
+    type: 'email',
+    value: authState.email,
+    editable: false
+  },
+  {
+    key: 'phoneNumber',
+    label: t('volunteerApplication.phoneNumber'),
+    type: 'tel',
+    value: authState.profile.mobileNumber,
+    editable: false
+  },
+  {
+    key: 'age',
+    label: t('volunteerApplication.age'),
+    type: 'number',
+    editable: true,
+    required: true
+  },
+  {
+    key: 'gender',
+    label: t('volunteerApplication.gender'),
+    type: 'radio',
+    required: true,
+    options: [
+      {
+        value: 'Male',
+        label: t('volunteerApplication.genderMale')
+      },
+      {
+        value: 'Female',
+        label: t('volunteerApplication.genderFemale')
+      },
+      {
+        value: 'Prefer not to say',
+        label: t('volunteerApplication.genderPreferNotToSay')
+      }
+    ]
+  },
+  {
+    key: 'preferredAvailableDays',
+    label: t('volunteerApplication.preferredAvailableDays'),
+    type: 'radio',
+    required: true,
+    options: [
+      {
+        value: 'Daily',
+        label: t('volunteerApplication.daily')
+      },
+      {
+        value: 'Few times a week',
+        label: t('volunteerApplication.fewTimesAWeek')
+      },
+      {
+        value: 'Only on Weekends',
+        label: t('volunteerApplication.onlyOnWeekends')
+      },
+      {
+        value: 'Flexible',
+        label: t('volunteerApplication.flexible')
+      }
+    ]
+  },
+  {
+    key: 'whyDoYouWantToVolunteer',
+    label: t('volunteerApplication.whyVolunteer'),
+    type: 'textarea',
+    required: true,
+    placeholder: t('volunteerApplication.whyVolunteerPlaceholder')
+  },
+  {
+    key: 'privacyConsent',
+    label: t('volunteerApplication.privacyConsentText'),
+    type: 'consent',
+    required: true,
+    value: false
+  }
+])
+const formLoading = ref(false)
+const formError = ref(null)
+const handleFormSubmit = async (formData) => {
+  try {
+    formLoading.value = true
+    formError.value = null
+
+    const result = await applyForVolunteerOpportunity({
+      volunteer_opportunity: volunteerOpportunityId,
+      age: formData.age,
+      preferred_available_days: formData.preferredAvailableDays,
+      why_do_you_want_to_volunteer: formData.whyDoYouWantToVolunteer,
+      privacy_consent: formData.privacyConsent
+    })
+
+    success.value =
+      result.message || t('volunteerApplication.applicationSubmittedSuccess')
+  } catch (e) {
+    formError.value =
+      e.message || t('volunteerApplication.submitError')
+  } finally {
+    formLoading.value = false
+  }
+}
+
+const goToVolunteerListings = () => {
+  router.push('/volunteer-listings')
+}
+
+const goToHome = () => {
+  router.push('/')
 }
 onMounted(async () => {
   try {
@@ -43,22 +161,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="min-h-full bg-gray-50">
+    <main class="mx-auto max-w-4xl px-4 pb-28 pt-6 space-y-4">
     <div v-if="!success">
       <header
        class="sticky top-0 z-20 flex items-center border-b border-gray-50 bg-white px-5 py-5"
       >
        <button
-         type="button"
-         @click="router.back()"
-         aria-label="Go back"
-       >
-         ←
-       </button>
-
-       <h1 class="ml-4 text-lg font-semibold text-gray-900">
+        type="button"
+        @click="router.back()"
+        class="-ml-2 rounded-full p-2 transition-colors hover:bg-gray-100"
+      >
+        <ArrowLeft class="h-6 w-6 text-gray-800" />
+      </button>
+       <h2 class="mx-auto -ml-2 text-lg font-bold text-gray-900">
          {{ t('volunteerApplication.headerTitle') }}
-       </h1>
+      </h2>
      </header>
      <div 
        v-if="opportunity" 
@@ -99,24 +217,6 @@ onMounted(async () => {
           {{ t('volunteerApplication.alreadyApplied') }}
         </p>
       </section>
-
-      <div class="space-y-4">
-        <button
-          type="button"
-          @click="router.push('/volunteer-listings')"
-          class="w-full rounded-lg bg-primary-600 px-6 py-4 text-base font-semibold text-white"
-        >
-          {{ t('volunteerApplication.browseMoreOpportunities') }}
-        </button>
-
-        <button
-          type="button"
-          @click="router.push('/')"
-          class="w-full rounded-lg border border-primary-600 bg-white px-6 py-4 text-base font-semibold text-primary-600"
-        >
-          {{ t('volunteerApplication.returnToHome') }}
-        </button>
-      </div>
     </div>
     <div v-else-if="success">
       <h1 class="text-lg font-normal text-gray-900">
@@ -201,35 +301,46 @@ onMounted(async () => {
           {{ t('volunteerApplication.whatHappensNextDescription') }}
         </p>
       </section>
-
-      <!-- CTAs -->
-      <div class="space-y-4">
-        <button
-          type="button"
-          @click="router.push('/volunteer-listings')"
-          class="w-full rounded-lg bg-primary-600 px-6 py-4 text-base font-semibold text-white"
-        >
-          {{ t('volunteerApplication.browseMoreOpportunities') }}
-        </button>
-
-        <button
-          type="button"
-          @click="router.push('/')"
-          class="w-full rounded-lg border border-primary-600 bg-white px-6 py-4 text-base font-semibold text-primary-600"
-        >
-          {{ t('volunteerApplication.returnToHome') }}
-        </button>
-      </div>
-
     </div>
+    
   </div>
+    <div
+      v-if="alreadyApplied || success"
+      class="space-y-4"
+    >
+      <button
+        type="button"
+        @click="goToVolunteerListings"
+        class="w-full rounded-lg bg-primary-600 px-6 py-4 text-base font-semibold text-white"
+      >
+        {{ t('volunteerApplication.browseMoreOpportunities') }}
+      </button>
 
-    <div v-else>
+      <button
+        type="button"
+        @click="goToHome"
+        class="w-full rounded-lg border border-primary-600 bg-white px-6 py-4 text-base font-semibold text-primary-600"
+      >
+        {{ t('volunteerApplication.returnToHome') }}
+      </button>
+    </div>
+    <div
+      v-if="!loading && !error && !alreadyApplied && !success"
+    >
+      <p
+        v-if="formError"
+        class="text-sm text-red-600"
+      >
+        {{ formError }}
+      </p>
+  
       <Form
-        :volunteer-opportunity-id="volunteerOpportunityId"
-        @result="handleFormResult"
+        :fields="fields"
+        :submit-label="t('volunteerApplication.submit')"
+        :loading="formLoading"
+        @submit="handleFormSubmit"
       />
     </div>
-
-  </div>
+  </main>
+</div>
 </template>
