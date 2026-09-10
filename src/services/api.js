@@ -390,74 +390,50 @@ export const getMetadataOptions = async (doctype) => {
         throw error
     }
 }
-
-/*
-PSEUDO-CODE: VOLUNTEER APPLICATION APIs
-
-1. checkVolunteerApplication(volunteerId)
-
-   - Call:
-     GET /api/method/samaaja.api.volunteer.check_application
-
-   - Send:
-     volunteer_opportunity = volunteerId
-
-   - Return:
-     API response containing already_applied
-
-
-2. applyForVolunteerOpportunity(applicationData)
-
-   - Call:
-     POST /api/method/samaaja.api.volunteer.apply
-
-   - Send:
-     volunteer_opportunity
-     age
-     preferred_available_days
-     why_do_you_want_to_volunteer
-     privacy_consent
-
-   - Do NOT send user.
-   - Backend gets the current user from the session.
-
-   - Return:
-     API success response or API error response.
-*/
-
 export const checkVolunteerApplication = async (volunteerId) => {
-    const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            volunteer_opportunity: volunteerId
+        })
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.check_application?${params.toString()}`,
+            'GET',
+            null
+        )
+
+        return result.data || result.message?.data || result
+    } catch (error) {
+        console.error('Failed to check volunteer application:', error)
+        throw error
     }
-
-    const params = new URLSearchParams({
-        volunteer_opportunity: volunteerId
-    })
-
-    const result = await callAPI(
-        headers,
-        `${baseurl}/api/method/samaaja.api.volunteer.check_application?${params.toString()}`,
-        'GET',
-        null
-    )
-
-    return result.data || result.message?.data || result
 }
+
 export const applyForVolunteerOpportunity = async (applicationData) => {
-    const headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.apply`,
+            'POST',
+            applicationData
+        )
+
+        return result.data || result.message?.data || result
+    } catch (error) {
+        console.error('Failed to apply for volunteer opportunity:', error)
+        throw error
     }
-
-    const result = await callAPI(
-        headers,
-        `${baseurl}/api/method/samaaja.api.volunteer.apply`,
-        'POST',
-        applicationData
-    )
-
-    return result.data || result.message?.data || result
 }
 
 export const createVolunteerInterest = async ({ user, volunteer_opportunity }) => {

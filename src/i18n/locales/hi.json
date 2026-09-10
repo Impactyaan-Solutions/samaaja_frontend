@@ -246,7 +246,9 @@
     "applyNow": "अभी आवेदन करें",
     "loading": "लोड हो रहा है...",
     "loadError": "स्वयंसेवी अवसर लोड नहीं हो पाया।",
-    "linkCopied": "लिंक कॉपी हो गया!"
+    "linkCopied": "लिंक कॉपी हो गया!",
+    "share": "साझा करें",
+    "shareError": "अवसर लिंक साझा करने में विफल"
   },
     "volunteerApplication": {
     "headerTitle": "आवेदन फ़ॉर्म",

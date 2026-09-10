@@ -248,7 +248,9 @@
     "applyNow": "Apply Now",
     "loading": "Loading...",
     "loadError": "Failed to load volunteer opportunity.",
-    "linkCopied": "Link copied!"
+    "linkCopied": "Link copied!",
+    "share": "Share",
+    "shareError": "Failed to share opportunity link"
   },
     "volunteerApplication": {
     "headerTitle": "Application Form",
