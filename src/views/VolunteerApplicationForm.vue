@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Loader2 } from 'lucide-vue-next'
 import { authState } from '@/auth'
 import {
   checkVolunteerApplication,
@@ -73,8 +74,15 @@ onMounted(async () => {
      </div>
     </div>
 
-    <div v-if="loading">
-      <p class="text-sm text-gray-600">
+    <div
+      v-if="loading"
+      class="flex flex-col items-center justify-center px-5 pt-16 text-center"
+    >
+      <Loader2
+        class="mb-3 h-7 w-7 animate-spin text-primary-500"
+      />
+
+      <p class="text-sm text-gray-500">
         {{ t('volunteerApplication.checkingApplicationStatus') }}
       </p>
     </div>

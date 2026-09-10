@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { ArrowLeft, Share2 } from 'lucide-vue-next'
+import { ArrowLeft, Share2, Loader2 } from 'lucide-vue-next'
 
 import { getVolunteerOpportunity } from '@/services/api'
 
@@ -69,10 +69,16 @@ onMounted(() => {
       <!-- Loading -->
       <div
         v-if="loading"
-        class="flex min-h-[60vh] items-center justify-center"
+        class="flex flex-col items-center justify-center px-5 pt-16 text-center"
       >
-        {{ t('volunteerOpportunityDetail.loading') }}
-      </div>
+        <Loader2
+          class="mb-3 h-7 w-7 animate-spin text-primary-500"
+        />
+
+        <p class="text-sm text-gray-500">
+          {{ t('volunteerOpportunityDetail.loading') }}
+        </p>
+      </div> 
 
       <!-- Error -->
       <div

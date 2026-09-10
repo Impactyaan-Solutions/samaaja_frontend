@@ -287,6 +287,8 @@ const submitApplication = async () => {
       {{ error }}
     </p>
 
+    <div class="h-4"></div>
+
     <button
       type="button"
       @click="submitApplication"
