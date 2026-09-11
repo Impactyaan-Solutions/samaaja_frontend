@@ -96,8 +96,10 @@ const fields = ref([
       enabled: true,
       label: t('volunteerApplication.addVoiceInput'),
       listeningLabel: t('volunteerApplication.listening'),
+      stoppingLabel: t('volunteerApplication.stoppingVoiceInput'),
       notSupportedMessage: t('volunteerApplication.voiceInputNotSupported'),
-      errorMessage: t('volunteerApplication.voiceInputError')
+      errorMessage: t('volunteerApplication.voiceInputError'),
+      permissionDeniedMessage: t('volunteerApplication.voiceInputPermissionDenied')
     }
   },
   {
@@ -127,7 +129,7 @@ const handleFormSubmit = async (formData) => {
     success.value =
       result.message || t('volunteerApplication.applicationSubmittedSuccess')
     await nextTick()
-    window.scrollTo({
+    document.querySelector('main')?.scrollTo({
       top: 0,
       behavior: 'smooth'
     })

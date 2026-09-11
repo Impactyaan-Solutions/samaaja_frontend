@@ -1,11 +1,24 @@
 <script setup>
-import { ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { SPEECH_RECOGNITION_LOCALES } from '@/i18n'
+
+const { locale } = useI18n()
 
 const isListening = ref(false)
+const isStopping = ref(false)
 const recognition = ref(null)
 const voiceInputRefs = {}
+let manualStop = false
 
 const startVoiceInput = (field) => {
+  if (isListening.value) {
+    manualStop = true
+    isStopping.value = true
+    recognition.value?.stop()
+    return
+  }
+
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition
 
@@ -14,9 +27,19 @@ const startVoiceInput = (field) => {
     return
   }
 
+  const textarea = voiceInputRefs[field.key]
+  const baseText = textarea ? textarea.value : ''
+  let sessionFinalText = ''
+  manualStop = false
+
   recognition.value = new SpeechRecognition()
-  recognition.value.lang = 'en-IN'
-  recognition.value.interimResults = false
+  recognition.value.lang = SPEECH_RECOGNITION_LOCALES[locale.value] || 'en-IN'
+  recognition.value.interimResults = true
+  // One short session at a time, auto-restarted in onend below, instead of
+  // relying on continuous:true — Chrome's continuous mode silently restarts
+  // recognition internally after each pause, which can briefly revert the
+  // transcript before it catches back up. Chaining clean single-utterance
+  // sessions avoids that flicker.
   recognition.value.continuous = false
 
   recognition.value.onstart = () => {
@@ -24,24 +47,61 @@ const startVoiceInput = (field) => {
   }
 
   recognition.value.onresult = (event) => {
-    const transcript = event.results[0][0].transcript
-    const textarea = voiceInputRefs[field.key]
+    let interimTranscript = ''
 
-    if (textarea) {
-      textarea.value = transcript
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript
+
+      if (event.results[i].isFinal) {
+        sessionFinalText += transcript + ' '
+      } else {
+        interimTranscript += transcript
+      }
+    }
+
+    const textareaEl = voiceInputRefs[field.key]
+
+    if (textareaEl) {
+      const separator = baseText && !/\s$/.test(baseText) ? ' ' : ''
+      textareaEl.value =
+        (baseText + separator + sessionFinalText + interimTranscript).trim()
     }
   }
 
-  recognition.value.onerror = () => {
-    field.voiceInputError = field.voiceInput.errorMessage
+  recognition.value.onerror = (event) => {
+    // A pause with nothing said yet just triggers 'no-speech' — quietly
+    // let onend restart instead of surfacing it as a real error.
+    if (event.error === 'no-speech') return
+
+    field.voiceInputError = event.error === 'not-allowed'
+      ? field.voiceInput.permissionDeniedMessage || field.voiceInput.errorMessage
+      : field.voiceInput.errorMessage
+    manualStop = true
   }
 
   recognition.value.onend = () => {
-    isListening.value = false
+    if (manualStop) {
+      isListening.value = false
+      isStopping.value = false
+      return
+    }
+
+    // A small delay avoids an InvalidStateError some browsers throw when
+    // start() is called again before the previous session has fully torn down.
+    setTimeout(() => {
+      if (!manualStop) recognition.value?.start()
+    }, 0)
   }
 
   recognition.value.start()
 }
+
+// Stop listening (and the auto-restart loop in onend) if the form is
+// navigated away from mid-recording, so the mic doesn't stay on in the background.
+onUnmounted(() => {
+  manualStop = true
+  recognition.value?.stop()
+})
 
 const setVoiceInputRef = (key) => (element) => {
   if (element) {
@@ -219,11 +279,14 @@ const submitForm = (event) => {
           v-if="field.voiceInput?.enabled"
           type="button"
           @click="startVoiceInput(field)"
-          class="mt-2 w-full rounded-md border border-primary-600 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700"
+          :disabled="isStopping"
+          class="mt-2 w-full rounded-md border border-primary-600 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {{ isListening
-            ? field.voiceInput.listeningLabel
-            : field.voiceInput.label
+          {{ isStopping
+            ? (field.voiceInput.stoppingLabel || field.voiceInput.listeningLabel)
+            : isListening
+              ? field.voiceInput.listeningLabel
+              : field.voiceInput.label
           }}
         </button>
 
