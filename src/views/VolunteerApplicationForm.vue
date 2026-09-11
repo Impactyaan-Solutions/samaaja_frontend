@@ -28,21 +28,24 @@ const fields = ref([
     label: t('volunteerApplication.fullName'),
     type: 'text',
     value: authState.profile.fullName,
-    editable: false
+    editable: false,
+    required: true
   },
   {
     key: 'email',
     label: t('volunteerApplication.email'),
     type: 'email',
     value: authState.email,
-    editable: false
+    editable: false,
+    required: true
   },
   {
     key: 'phoneNumber',
     label: t('volunteerApplication.phoneNumber'),
     type: 'tel',
     value: authState.profile.mobileNumber,
-    editable: false
+    editable: false,
+    required: true    
   },
   {
     key: 'gender',
