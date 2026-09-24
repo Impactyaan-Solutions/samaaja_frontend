@@ -279,27 +279,160 @@ export const getActiveAnnouncements = async () => {
     return result.data
 }
 
-export const getVolunteerListings = async () => {
+export const getVolunteerListings = async (
+    filters = {},
+    limit = 10,
+    offset = 0
+) => {
     try {
-        const headers = { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            filters: JSON.stringify(filters),
+            limit: String(limit),
+            offset: String(offset)
+        })
 
         const result = await callAPI(
             headers,
-            `${baseurl}/api/resource/Volunteer%20Opportunity?fields=["*"]`,
+            `${baseurl}/api/method/samaaja.api.volunteer.get_list?${params.toString()}`,
             'GET',
             null
         )
 
-        if (Array.isArray(result.data)) return result.data
-        if (Array.isArray(result?.message?.data)) return result.message.data
-        if (Array.isArray(result?.data?.data)) return result.data.data
+        if (Array.isArray(result?.data?.opportunities)) {
+            return {
+                opportunities: result.data.opportunities,
+                has_more: result.data.has_more,
+                limit: result.data.limit,
+                offset: result.data.offset
+            }
+        }
 
-        return []
+        if (Array.isArray(result?.message?.data?.opportunities)) {
+            return {
+                opportunities: result.message.data.opportunities,
+                has_more: result.message.data.has_more,
+                limit: result.message.data.limit,
+                offset: result.message.data.offset
+            }
+        }
+
+        return {
+            opportunities: [],
+            has_more: false,
+            limit,
+            offset
+        }
     } catch (error) {
-        console.warn('Volunteer listings endpoint not available. Falling back to demo data.', error)
+        console.warn('Failed to fetch volunteer listings.', error)
+        throw error
+    }
+}
 
-        return [
-        ]
+export const getVolunteerOpportunity = async (volunteerId) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            volunteer_id: volunteerId
+        })
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.get?${params.toString()}`,
+            'GET',
+            null
+        )
+
+        if (result?.data?.opportunity) {
+            return result.data.opportunity
+        }
+
+        if (result?.message?.data?.opportunity) {
+            return result.message.data.opportunity
+        }
+
+        throw new Error('Volunteer opportunity data not found')
+    } catch (error) {
+        console.error('Failed to fetch volunteer opportunity:', error)
+        throw error
+    }
+}
+
+export const getMetadataOptions = async (doctype) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            doctype
+        })
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.metadata.get_list?${params.toString()}`,
+            'GET',
+            null
+        )
+
+        return result?.data || result?.message?.data || []
+    } catch (error) {
+        console.error(`Failed to fetch metadata options for ${doctype}:`, error)
+        throw error
+    }
+}
+export const checkVolunteerApplication = async (volunteerId) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const params = new URLSearchParams({
+            volunteer_opportunity: volunteerId
+        })
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.check_application?${params.toString()}`,
+            'GET',
+            null
+        )
+
+        return result.data || result.message?.data || result
+    } catch (error) {
+        console.error('Failed to check volunteer application:', error)
+        throw error
+    }
+}
+
+export const applyForVolunteerOpportunity = async (applicationData) => {
+    try {
+        const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+
+        const result = await callAPI(
+            headers,
+            `${baseurl}/api/method/samaaja.api.volunteer.apply`,
+            'POST',
+            applicationData
+        )
+
+        return result.data || result.message?.data || result
+    } catch (error) {
+        console.error('Failed to apply for volunteer opportunity:', error)
+        throw error
     }
 }
 
