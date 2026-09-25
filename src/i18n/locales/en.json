@@ -45,6 +45,8 @@
     "volunteerListingsDesc": "Discover roles to support your community."
   },
   "landing": {
+    "appName": "Samaaja",
+    "logo": { "src": "/samaaja.png", "alt": "Samaaja Logo", "name": "Samaaja" },
     "tagline": "Build Your Community. Take Action.",
     "subtitle": "Join people in your area solving real issues and improving their community together.",
     "signUp": "Sign Up",
