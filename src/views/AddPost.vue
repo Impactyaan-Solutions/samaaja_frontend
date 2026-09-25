@@ -80,7 +80,7 @@ const removeFile = (index) => {
 const fetchMetadataOptions = async () => {
   try {
     const [categoryOptions ] = await Promise.all([
-      getMetadataOptions('Category'),
+      getMetadataOptions('Action Category'),
     ])
     console.log('Fetched category options:', categoryOptions)
     categories.value = categoryOptions
