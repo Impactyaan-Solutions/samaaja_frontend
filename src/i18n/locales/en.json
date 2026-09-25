@@ -67,6 +67,7 @@
     "sendOtp": "Send OTP",
     "loginButton": "Login",
     "orContinueWith": "OR CONTINUE WITH",
+    "ContinueWith": "CONTINUE WITH",
     "google": "Google",
     "agreementPrefix": "By logging in, you agree to our",
     "and": "and",
@@ -96,6 +97,7 @@
     "bioPlaceholder": "Short bio",
     "createAccount": "Create Account",
     "orSignUpWith": "Or sign up with",
+    "SignUpWith": "Sign up with",
     "google": "Google",
     "fillRequiredFields": "Please fill in all the required fields.",
     "connectionFailed": "Connection failed: {error}"

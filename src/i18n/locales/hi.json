@@ -65,6 +65,7 @@
     "sendOtp": "ओटीपी भेजें",
     "loginButton": "लॉग इन करें",
     "orContinueWith": "या इसके साथ जारी रखें",
+    "ContinueWith": "इसके साथ जारी रखें",
     "google": "गूगल",
     "agreementPrefix": "लॉग इन करके, आप हमारी",
     "and": "और",
@@ -94,6 +95,7 @@
     "bioPlaceholder": "संक्षिप्त बायो",
     "createAccount": "खाता बनाएं",
     "orSignUpWith": "या इसके साथ साइन अप करें",
+    "SignUpWith": "इसके साथ साइन अप करें",
     "google": "गूगल",
     "fillRequiredFields": "कृपया सभी आवश्यक फ़ील्ड भरें।",
     "connectionFailed": "कनेक्शन विफल: {error}"
