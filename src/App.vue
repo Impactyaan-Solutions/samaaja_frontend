@@ -18,6 +18,11 @@ watch(
   () => {
     document.title = t('landing.appName')
     document.documentElement.lang = locale.value
+
+    const favicon = document.getElementById('favicon')
+    if (favicon) {
+      favicon.href = t('landing.logo.src')
+    }
   },
   { immediate: true }
 )
